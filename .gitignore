@@ -1,1 +1,7 @@
 .superpowers/
+node_modules
+dist
+.output
+.vinxi
+.env
+src/routeTree.gen.ts
