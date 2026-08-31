@@ -21,8 +21,11 @@ locally for now, no public deployment.
   beat grid, segments) for API apps created after November 2024. This app may or may
   not get access — it must be treated as best-effort and degrade gracefully.
 - The Web Playback SDK requires a Spotify Premium account to initialize.
-- New Spotify apps run in "Development Mode": a hard cap of 25 manually allowlisted
-  users, no Spotify review needed. Matches this project's scope.
+- As of the February 2026 Dev Mode changes, new Spotify apps in "Development Mode"
+  are capped at 5 manually allowlisted users (1 Client ID per developer), no Spotify
+  review needed. The app owner's Spotify account must also carry an active Premium
+  subscription or the app stops working entirely. Matches this project's scope (just
+  the user and a few friends).
 
 Given these constraints, "reactive" visuals are procedural: driven by playback
 position (from SDK state events), a best-effort tempo, and colors extracted from the
@@ -135,5 +138,5 @@ no separate backend service.
   Spotify client; this app is a visualizer + device, not a library UI).
 - Multiple visualizer presets/switcher (one signature preset only for v1).
 - Any deployment/hosting configuration (local dev only for now).
-- Spotify Extended Quota Mode submission (Development Mode's 25-user cap is
+- Spotify Extended Quota Mode submission (Development Mode's 5-user cap is
   sufficient for this scope).
