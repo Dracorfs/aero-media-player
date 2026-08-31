@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { getCookie, deleteCookie } from '@tanstack/react-start/server'
 import { exchangeCodeForTokens, PKCE_COOKIE } from '../server/spotify-auth'
@@ -16,9 +16,14 @@ const completeLogin = createServerFn({ method: 'GET' })
       throw new Error('Missing PKCE verifier cookie')
     }
 
-    const tokens = await exchangeCodeForTokens(data.code, verifier)
-    await setSpotifySession(tokens)
-    deleteCookie(PKCE_COOKIE)
+    try {
+      const tokens = await exchangeCodeForTokens(data.code, verifier)
+      await setSpotifySession(tokens)
+    } catch {
+      throw new Error('Spotify login failed')
+    } finally {
+      deleteCookie(PKCE_COOKIE)
+    }
   })
 
 export const Route = createFileRoute('/callback')({
@@ -31,4 +36,10 @@ export const Route = createFileRoute('/callback')({
     await completeLogin({ data: deps })
     throw redirect({ to: '/' })
   },
+  errorComponent: () => (
+    <div>
+      <p>Login failed, please try again.</p>
+      <Link to="/login">Back to login</Link>
+    </div>
+  ),
 })
