@@ -46,6 +46,66 @@ describe('usePlaybackSDK', () => {
     expect(result.current.error).toBe('account_error')
   })
 
+  it('does not re-create the SDK player when the caller passes a new getter identity', () => {
+    // `index.tsx` calls `usePlaybackSDK(() => getPlaybackToken())`, i.e. a fresh
+    // arrow function every render. If the mount effect is keyed on that getter,
+    // every re-render disconnects the player and registers a brand new Spotify
+    // Connect device — which breaks playback outright.
+    const { rerender } = renderHook(({ getToken }) => usePlaybackSDK(getToken), {
+      initialProps: { getToken: async () => 'token' },
+    })
+
+    rerender({ getToken: async () => 'token' })
+    rerender({ getToken: async () => 'token' })
+
+    expect(window.Spotify.Player).toHaveBeenCalledTimes(1)
+    expect(fakePlayer.connect).toHaveBeenCalledTimes(1)
+    expect(fakePlayer.disconnect).not.toHaveBeenCalled()
+  })
+
+  it('reads the latest token getter through the ref on every getOAuthToken call', async () => {
+    const first = vi.fn(async () => 'first-token')
+    const second = vi.fn(async () => 'second-token')
+    const { rerender } = renderHook(({ getToken }) => usePlaybackSDK(getToken), {
+      initialProps: { getToken: first },
+    })
+
+    rerender({ getToken: second })
+
+    const options = (window.Spotify.Player as unknown as { mock: { calls: [Spotify.PlayerInit][] } }).mock
+      .calls[0][0]
+    const callback = vi.fn()
+    options.getOAuthToken(callback)
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledWith('second-token'))
+    expect(first).not.toHaveBeenCalled()
+  })
+
+  it('flags an authentication_error when the token getter rejects', async () => {
+    const { result } = renderHook(() =>
+      usePlaybackSDK(async () => {
+        throw new Error('Not authenticated')
+      }),
+    )
+
+    const options = (window.Spotify.Player as unknown as { mock: { calls: [Spotify.PlayerInit][] } }).mock
+      .calls[0][0]
+    await act(async () => {
+      options.getOAuthToken(vi.fn())
+    })
+
+    await vi.waitFor(() => expect(result.current.error).toBe('authentication_error'))
+  })
+
+  it('flags an authentication_error when the SDK emits one', () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    act(() => {
+      fakePlayer.emit('authentication_error', { message: 'Invalid token' })
+    })
+
+    expect(result.current.error).toBe('authentication_error')
+  })
+
   it('togglePlay delegates to the underlying SDK player', () => {
     const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
 
