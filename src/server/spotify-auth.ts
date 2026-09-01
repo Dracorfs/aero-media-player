@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { setCookie } from '@tanstack/react-start/server'
 import { generateCodeVerifier, generateCodeChallenge } from './pkce'
+import { requireEnv } from './env'
 
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
@@ -33,9 +34,9 @@ export const buildAuthorizeUrl = createServerFn({ method: 'GET' }).handler(async
   })
 
   const params = new URLSearchParams({
-    client_id: process.env.SPOTIFY_CLIENT_ID!,
+    client_id: requireEnv('SPOTIFY_CLIENT_ID'),
     response_type: 'code',
-    redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
+    redirect_uri: requireEnv('SPOTIFY_REDIRECT_URI'),
     code_challenge_method: 'S256',
     code_challenge: challenge,
     scope: SCOPES,
@@ -51,8 +52,8 @@ export async function exchangeCodeForTokens(code: string, verifier: string): Pro
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: process.env.SPOTIFY_REDIRECT_URI!,
-      client_id: process.env.SPOTIFY_CLIENT_ID!,
+      redirect_uri: requireEnv('SPOTIFY_REDIRECT_URI'),
+      client_id: requireEnv('SPOTIFY_CLIENT_ID'),
       code_verifier: verifier,
     }),
   })
@@ -81,7 +82,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<SpotifyT
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: process.env.SPOTIFY_CLIENT_ID!,
+      client_id: requireEnv('SPOTIFY_CLIENT_ID'),
     }),
   })
 

@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

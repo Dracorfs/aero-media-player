@@ -5,7 +5,7 @@ import { exchangeCodeForTokens, PKCE_COOKIE } from '../server/spotify-auth'
 import { setSpotifySession } from '../server/session'
 
 const completeLogin = createServerFn({ method: 'GET' })
-  .inputValidator((data: { code?: string; error?: string }) => data)
+  .validator((data: { code?: string; error?: string }) => data)
   .handler(async ({ data }) => {
     if (data.error || !data.code) {
       throw new Error(data.error ?? 'Missing authorization code')
