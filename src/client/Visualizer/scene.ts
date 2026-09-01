@@ -13,6 +13,22 @@ export interface VisualizerFrame {
   isPlaying: boolean
 }
 
+/**
+ * How far the incoming `progressMs` may differ from the locally interpolated
+ * position before we treat it as a real seek / track change and resync.
+ * The SDK reports position at roughly 1s granularity, so a smaller threshold
+ * would fight the smooth local rAF interpolation on every event.
+ */
+export const PROGRESS_RESYNC_THRESHOLD_MS = 1500
+
+export function shouldResyncProgress(
+  incomingProgressMs: number,
+  elapsedProgressMs: number,
+  threshold = PROGRESS_RESYNC_THRESHOLD_MS,
+): boolean {
+  return Math.abs(incomingProgressMs - elapsedProgressMs) > threshold
+}
+
 export interface VisualizerHandle {
   setFrame: (frame: VisualizerFrame) => void
   resize: (width: number, height: number) => void
@@ -118,6 +134,12 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
 
   return {
     setFrame: (next) => {
+      // Between events the animation runs off the local rAF clock; when the
+      // reported position diverges (a seek, a track change, or drift after a
+      // pause/throttle) snap the animation's position basis back to reality.
+      if (shouldResyncProgress(next.progressMs, elapsedProgressMs)) {
+        elapsedProgressMs = next.progressMs
+      }
       frame = next
     },
     resize: (width, height) => {

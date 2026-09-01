@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './PlayerChrome.css'
 
 interface PlayerChromeProps {
@@ -25,6 +26,18 @@ export function PlayerChrome({
   onSeek,
   onVolumeChange,
 }: PlayerChromeProps) {
+  // While the user drags, the slider is driven by local state so it doesn't
+  // fight the coarse, event-driven `progressMs` prop (which would make the
+  // thumb freeze or jump backwards mid-drag). The seek is issued once, on
+  // release, instead of on every drag step.
+  const [draggedMs, setDraggedMs] = useState<number | null>(null)
+
+  function commitSeek() {
+    if (draggedMs === null) return
+    onSeek(draggedMs)
+    setDraggedMs(null)
+  }
+
   return (
     <div className="player-chrome">
       <div className="player-chrome__track">
@@ -46,8 +59,14 @@ export function PlayerChrome({
         type="range"
         min={0}
         max={durationMs}
-        value={progressMs}
-        onChange={(e) => onSeek(Number(e.target.value))}
+        value={draggedMs ?? progressMs}
+        onChange={(e) => setDraggedMs(Number(e.target.value))}
+        onPointerUp={commitSeek}
+        onMouseUp={commitSeek}
+        onTouchEnd={commitSeek}
+        onKeyUp={commitSeek}
+        onBlur={commitSeek}
+        aria-label="Seek"
         className="player-chrome__seek"
       />
       <input

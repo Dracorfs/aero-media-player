@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { isExpiringSoon, fetchTempo } from './spotify-api'
+import { isNotAuthenticatedError } from '../shared/authError'
+import { MissingEnvVarError } from './env'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -45,5 +47,28 @@ describe('fetchTempo', () => {
     )
 
     expect(await fetchTempo('track-1', 'token')).toBe(120)
+  })
+})
+
+describe('isNotAuthenticatedError', () => {
+  it('is true for the missing-session error', () => {
+    expect(isNotAuthenticatedError(new Error('Not authenticated'))).toBe(true)
+  })
+
+  it('is true for a failed refresh (revoked refresh token)', () => {
+    expect(isNotAuthenticatedError(new Error('Spotify token refresh failed: 400'))).toBe(true)
+  })
+
+  it('is true for a plain serialized error object crossing the server-fn boundary', () => {
+    expect(isNotAuthenticatedError({ message: 'Not authenticated' })).toBe(true)
+  })
+
+  it('is false for a config error, so it is not swallowed into a login redirect', () => {
+    expect(isNotAuthenticatedError(new MissingEnvVarError('SPOTIFY_CLIENT_ID'))).toBe(false)
+  })
+
+  it('is false for non-error values', () => {
+    expect(isNotAuthenticatedError(undefined)).toBe(false)
+    expect(isNotAuthenticatedError('Not authenticated')).toBe(false)
   })
 })

@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { getSpotifySession, setSpotifySession, clearSpotifySession } from './session'
 import { refreshAccessToken } from './spotify-auth'
+import { NOT_AUTHENTICATED_MESSAGE } from '../shared/authError'
 
 const EXPIRY_BUFFER_MS = 60_000
 
@@ -8,12 +9,17 @@ export function isExpiringSoon(expiresAt: number, now = Date.now()): boolean {
   return expiresAt - EXPIRY_BUFFER_MS <= now
 }
 
-export const getPlaybackToken = createServerFn({ method: 'GET' }).handler(async () => {
+/**
+ * The single source of truth for "give me an access token I can actually use".
+ * Refreshes (and re-persists) the session when the current token is expiring,
+ * clearing the session if the refresh token itself has been revoked.
+ */
+async function getValidAccessToken(): Promise<string> {
   const session = await getSpotifySession()
   const { accessToken, refreshToken, expiresAt } = session.data
 
   if (!accessToken || !refreshToken || expiresAt === undefined) {
-    throw new Error('Not authenticated')
+    throw new Error(NOT_AUTHENTICATED_MESSAGE)
   }
 
   if (isExpiringSoon(expiresAt)) {
@@ -28,7 +34,9 @@ export const getPlaybackToken = createServerFn({ method: 'GET' }).handler(async 
   }
 
   return accessToken
-})
+}
+
+export const getPlaybackToken = createServerFn({ method: 'GET' }).handler(async () => getValidAccessToken())
 
 const DEFAULT_BPM = 120
 
@@ -47,25 +55,33 @@ export async function fetchTempo(trackId: string, accessToken: string): Promise<
 }
 
 export const getTempo = createServerFn({ method: 'GET' })
-  .inputValidator((data: { trackId: string }) => data)
+  .validator((data: { trackId: string }) => data)
   .handler(async ({ data }) => {
-    const session = await getSpotifySession()
-    if (!session.data.accessToken) return DEFAULT_BPM
-    return fetchTempo(data.trackId, session.data.accessToken)
+    let accessToken: string
+    try {
+      accessToken = await getValidAccessToken()
+    } catch {
+      // Tempo is best-effort decoration — never surface auth trouble here.
+      return DEFAULT_BPM
+    }
+    return fetchTempo(data.trackId, accessToken)
   })
 
 export const transferPlaybackHere = createServerFn({ method: 'POST' })
-  .inputValidator((data: { deviceId: string }) => data)
+  .validator((data: { deviceId: string }) => data)
   .handler(async ({ data }) => {
-    const session = await getSpotifySession()
-    if (!session.data.accessToken) return
+    const accessToken = await getValidAccessToken()
 
-    await fetch('https://api.spotify.com/v1/me/player', {
+    const response = await fetch('https://api.spotify.com/v1/me/player', {
       method: 'PUT',
       headers: {
-        Authorization: `Bearer ${session.data.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ device_ids: [data.deviceId], play: true }),
     })
+
+    if (!response.ok) {
+      throw new Error(`Spotify transfer playback failed: ${response.status}`)
+    }
   })

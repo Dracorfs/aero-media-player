@@ -1,6 +1,7 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getPlaybackToken, getTempo } from '../server/spotify-api'
+import { isNotAuthenticatedError } from '../shared/authError'
 import { usePlaybackSDK } from '../client/usePlaybackSDK'
 import { useAlbumPalette } from '../client/useAlbumPalette'
 import { Visualizer } from '../client/Visualizer/Visualizer'
@@ -10,8 +11,14 @@ export const Route = createFileRoute('/')({
   beforeLoad: async () => {
     try {
       await getPlaybackToken()
-    } catch {
-      throw redirect({ to: '/login' })
+    } catch (err) {
+      // Only a genuine "you aren't logged in" failure becomes a redirect.
+      // Config/startup errors (e.g. a missing SPOTIFY_CLIENT_ID) must surface
+      // instead of being masked as a silent bounce to /login.
+      if (isNotAuthenticatedError(err)) {
+        throw redirect({ to: '/login' })
+      }
+      throw err
     }
   },
   component: Index,
@@ -22,6 +29,15 @@ function Index() {
     usePlaybackSDK(() => getPlaybackToken())
   const palette = useAlbumPalette(state?.albumArtUrl)
   const [bpm, setBpm] = useState(120)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // The session's refresh token was revoked (or Spotify rejected the token):
+    // there is no recovering client-side, send the user back through login.
+    if (error === 'authentication_error') {
+      navigate({ to: '/login' })
+    }
+  }, [error, navigate])
 
   useEffect(() => {
     if (!state?.trackId) return
@@ -38,16 +54,23 @@ function Index() {
     return <FullScreenMessage text="Spotify Premium is required to use this player." />
   }
 
-  if (!state) {
-    return <FullScreenMessage text="Waiting for playback..." />
+  if (error === 'authentication_error') {
+    return <FullScreenMessage text="Your Spotify session expired. Redirecting to login..." />
   }
 
+  // Checked before `!state`: on a cold start both are falsy, and "Play here" is
+  // the actionable screen (this tab has to become the active Spotify device
+  // before any playback state can ever arrive).
   if (!isActiveDevice) {
     return (
-      <FullScreenMessage text="Aero Media Player isn't the active Spotify device.">
+      <FullScreenMessage text="Select Aero Media Player as your Spotify device, or press Play here.">
         <button onClick={playHere}>Play here</button>
       </FullScreenMessage>
     )
+  }
+
+  if (!state) {
+    return <FullScreenMessage text="Waiting for playback..." />
   }
 
   return (
