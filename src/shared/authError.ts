@@ -5,7 +5,7 @@
  */
 
 export const NOT_AUTHENTICATED_MESSAGE = 'Not authenticated'
-const REFRESH_FAILED_MESSAGE = 'Spotify token refresh failed'
+export const REFRESH_FAILED_MESSAGE = 'Spotify token refresh failed'
 
 /**
  * True only for the errors that mean "send the user back through login".

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { toPlaybackState, type PlaybackState } from './playbackState'
 import { transferPlaybackHere } from '../server/spotify-api'
+import { isNotAuthenticatedError } from '../shared/authError'
 
 export type PlaybackSDKError = 'account_error' | 'initialization_error' | 'authentication_error'
 
@@ -45,7 +46,17 @@ export function usePlaybackSDK(getAccessToken: () => Promise<string>): PlaybackS
           getAccessTokenRef
             .current()
             .then(callback)
-            .catch(() => setError('authentication_error'))
+            .catch((err: unknown) => {
+              // Only a genuine "log in again" failure should evict the user.
+              // A transient network blip should not — the SDK calls
+              // getOAuthToken again on its own later, so just log and let it
+              // retry rather than bouncing a playing session to /login.
+              if (isNotAuthenticatedError(err)) {
+                setError('authentication_error')
+              } else {
+                console.error('Failed to fetch a playback access token', err)
+              }
+            })
         },
         volume: 0.5,
       })

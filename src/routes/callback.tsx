@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getCookie, deleteCookie } from '@tanstack/react-start/server'
 import { exchangeCodeForTokens, PKCE_COOKIE } from '../server/spotify-auth'
 import { setSpotifySession } from '../server/session'
+import { isMissingEnvVarError } from '../server/env'
 
 const completeLogin = createServerFn({ method: 'GET' })
   .validator((data: { code?: string; error?: string }) => data)
@@ -19,7 +20,11 @@ const completeLogin = createServerFn({ method: 'GET' })
     try {
       const tokens = await exchangeCodeForTokens(data.code, verifier)
       await setSpotifySession(tokens)
-    } catch {
+    } catch (err) {
+      // A missing/misconfigured env var is a setup problem, not a failed
+      // Spotify exchange — don't mask it behind the generic login-failed
+      // message, or a developer chasing this down gets no signal at all.
+      if (isMissingEnvVarError(err)) throw err
       throw new Error('Spotify login failed')
     } finally {
       deleteCookie(PKCE_COOKIE)
@@ -36,10 +41,15 @@ export const Route = createFileRoute('/callback')({
     await completeLogin({ data: deps })
     throw redirect({ to: '/' })
   },
-  errorComponent: () => (
-    <div>
-      <p>Login failed, please try again.</p>
-      <Link to="/login">Back to login</Link>
-    </div>
-  ),
+  errorComponent: ({ error }) =>
+    isMissingEnvVarError(error) ? (
+      <div>
+        <p>{error instanceof Error ? error.message : 'Server is missing required configuration.'}</p>
+      </div>
+    ) : (
+      <div>
+        <p>Login failed, please try again.</p>
+        <Link to="/login">Back to login</Link>
+      </div>
+    ),
 })

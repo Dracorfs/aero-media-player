@@ -96,6 +96,30 @@ describe('usePlaybackSDK', () => {
     await vi.waitFor(() => expect(result.current.error).toBe('authentication_error'))
   })
 
+  it('does not flag authentication_error for a transient token-fetch failure', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { result } = renderHook(() =>
+      usePlaybackSDK(async () => {
+        throw new Error('network error')
+      }),
+    )
+
+    const options = (window.Spotify.Player as unknown as { mock: { calls: [Spotify.PlayerInit][] } }).mock
+      .calls[0][0]
+    await act(async () => {
+      options.getOAuthToken(vi.fn())
+    })
+
+    expect(result.current.error).toBeNull()
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to fetch a playback access token',
+      expect.any(Error),
+    )
+
+    consoleError.mockRestore()
+  })
+
   it('flags an authentication_error when the SDK emits one', () => {
     const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
 

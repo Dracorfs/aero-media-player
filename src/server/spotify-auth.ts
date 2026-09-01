@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { setCookie } from '@tanstack/react-start/server'
 import { generateCodeVerifier, generateCodeChallenge } from './pkce'
 import { requireEnv } from './env'
+import { REFRESH_FAILED_MESSAGE } from '../shared/authError'
 
 const SPOTIFY_AUTHORIZE_URL = 'https://accounts.spotify.com/authorize'
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
@@ -87,7 +88,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<SpotifyT
   })
 
   if (!response.ok) {
-    throw new Error(`Spotify token refresh failed: ${response.status}`)
+    throw new Error(`${REFRESH_FAILED_MESSAGE}: ${response.status}`)
   }
 
   const data = (await response.json()) as {
