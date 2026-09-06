@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { usePlaybackSDK } from './usePlaybackSDK'
+import { playTrackInContext } from '../server/spotify-api'
+
+vi.mock('../server/spotify-api', () => ({
+  playTrackInContext: vi.fn().mockResolvedValue(undefined),
+}))
 
 class FakePlayer {
   listeners = new Map<string, (payload: unknown) => void>()
@@ -21,6 +26,7 @@ describe('usePlaybackSDK', () => {
   let fakePlayer: FakePlayer
 
   beforeEach(() => {
+    vi.clearAllMocks()
     fakePlayer = new FakePlayer()
     // @ts-expect-error test stub, not the real SDK types
     window.Spotify = { Player: vi.fn(function () { return fakePlayer }) }
@@ -138,5 +144,28 @@ describe('usePlaybackSDK', () => {
     })
 
     expect(fakePlayer.togglePlay).toHaveBeenCalled()
+  })
+
+  it('playTrack starts the given track in context on this device once it is ready', () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    act(() => {
+      fakePlayer.emit('ready', { device_id: 'device-1' })
+      result.current.playTrack('spotify:playlist:p1', 'spotify:track:t1')
+    })
+
+    expect(playTrackInContext).toHaveBeenCalledWith({
+      data: { deviceId: 'device-1', contextUri: 'spotify:playlist:p1', trackUri: 'spotify:track:t1' },
+    })
+  })
+
+  it('playTrack does nothing when the device is not ready yet', () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    act(() => {
+      result.current.playTrack('spotify:playlist:p1', 'spotify:track:t1')
+    })
+
+    expect(playTrackInContext).not.toHaveBeenCalled()
   })
 })

@@ -67,21 +67,124 @@ export const getTempo = createServerFn({ method: 'GET' })
     return fetchTempo(data.trackId, accessToken)
   })
 
-export const transferPlaybackHere = createServerFn({ method: 'POST' })
-  .validator((data: { deviceId: string }) => data)
-  .handler(async ({ data }) => {
-    const accessToken = await getValidAccessToken()
+export interface Playlist {
+  id: string
+  name: string
+  uri: string
+  imageUrl?: string
+}
 
-    const response = await fetch('https://api.spotify.com/v1/me/player', {
+async function fetchCurrentUserId(accessToken: string): Promise<string> {
+  const response = await fetch('https://api.spotify.com/v1/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Spotify current-user request failed: ${response.status}`)
+  }
+
+  const body = (await response.json()) as { id: string }
+  return body.id
+}
+
+export async function fetchPlaylists(accessToken: string): Promise<Playlist[]> {
+  const currentUserId = await fetchCurrentUserId(accessToken)
+
+  const response = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Spotify playlists request failed: ${response.status}`)
+  }
+
+  const body = (await response.json()) as {
+    items: { id: string; name: string; uri: string; images: { url: string }[]; owner: { id: string } }[]
+  }
+
+  // Spotify's API policy blocks GET /playlists/{id}/items in Development
+  // Mode for playlists the user follows but doesn't own, so a followed
+  // playlist can't be offered here — picking one would always 403.
+  return body.items
+    .filter((item) => item.owner.id === currentUserId)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      uri: item.uri,
+      imageUrl: item.images[0]?.url,
+    }))
+}
+
+export const getPlaylists = createServerFn({ method: 'GET' }).handler(async () =>
+  fetchPlaylists(await getValidAccessToken()),
+)
+
+export interface PlaylistTrack {
+  uri: string
+  name: string
+  artists: string
+}
+
+interface PlaylistItemEntry {
+  type: string
+  uri: string
+  name: string
+  artists?: { name: string }[]
+}
+
+export async function fetchPlaylistTracks(playlistId: string, accessToken: string): Promise<PlaylistTrack[]> {
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/items?limit=50`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Spotify playlist tracks request failed: ${response.status}`)
+  }
+
+  const body = (await response.json()) as { items: { item: PlaylistItemEntry | null }[] }
+
+  // GET /playlists/{id}/items (Feb 2026 replacement for the deprecated
+  // /tracks endpoint) nests the played thing under `item`, which can be an
+  // episode — episodes have no `artists` array, so they're skipped here.
+  return body.items
+    .filter((entry): entry is { item: PlaylistItemEntry & { artists: { name: string }[] } } =>
+      entry.item !== null && entry.item.type === 'track',
+    )
+    .map((entry) => ({
+      uri: entry.item.uri,
+      name: entry.item.name,
+      artists: entry.item.artists.map((artist) => artist.name).join(', '),
+    }))
+}
+
+export const getPlaylistTracks = createServerFn({ method: 'GET' })
+  .validator((data: { playlistId: string }) => data)
+  .handler(async ({ data }) => fetchPlaylistTracks(data.playlistId, await getValidAccessToken()))
+
+export interface PlayInContextRequest {
+  deviceId: string
+  contextUri: string
+  trackUri: string
+}
+
+export async function postPlayInContext(request: PlayInContextRequest, accessToken: string): Promise<void> {
+  const response = await fetch(
+    `https://api.spotify.com/v1/me/player/play?device_id=${request.deviceId}`,
+    {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ device_ids: [data.deviceId], play: true }),
-    })
+      body: JSON.stringify({ context_uri: request.contextUri, offset: { uri: request.trackUri } }),
+    },
+  )
 
-    if (!response.ok) {
-      throw new Error(`Spotify transfer playback failed: ${response.status}`)
-    }
-  })
+  if (!response.ok) {
+    throw new Error(`Spotify play request failed: ${response.status}`)
+  }
+}
+
+export const playTrackInContext = createServerFn({ method: 'POST' })
+  .validator((data: PlayInContextRequest) => data)
+  .handler(async ({ data }) => postPlayInContext(data, await getValidAccessToken()))

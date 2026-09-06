@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toPlaybackState, type PlaybackState } from './playbackState'
-import { transferPlaybackHere } from '../server/spotify-api'
+import { playTrackInContext } from '../server/spotify-api'
 import { isNotAuthenticatedError } from '../shared/authError'
 
 export type PlaybackSDKError = 'account_error' | 'initialization_error' | 'authentication_error'
@@ -14,7 +14,7 @@ interface PlaybackSDK {
   skipPrevious: () => void
   seek: (positionMs: number) => void
   setVolume: (volume: number) => void
-  playHere: () => void
+  playTrack: (contextUri: string, trackUri: string) => void
 }
 
 declare global {
@@ -112,12 +112,12 @@ export function usePlaybackSDK(getAccessToken: () => Promise<string>): PlaybackS
     skipPrevious: () => playerRef.current?.previousTrack(),
     seek: (positionMs) => playerRef.current?.seek(positionMs),
     setVolume: (volume) => playerRef.current?.setVolume(volume),
-    playHere: () => {
+    playTrack: (contextUri, trackUri) => {
       if (deviceIdRef.current) {
-        // The server function now throws on a failed transfer; surface it in
-        // the console rather than leaving an unhandled rejection.
-        transferPlaybackHere({ data: { deviceId: deviceIdRef.current } }).catch((err: unknown) => {
-          console.error('Failed to transfer playback to this device', err)
+        playTrackInContext({
+          data: { deviceId: deviceIdRef.current, contextUri, trackUri },
+        }).catch((err: unknown) => {
+          console.error('Failed to start playback for the selected track', err)
         })
       }
     },

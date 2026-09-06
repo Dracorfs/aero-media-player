@@ -25,7 +25,11 @@ export default defineConfig(({ mode }) => {
   loadDotEnvIntoProcessEnv(mode)
 
   return {
-    server: { port: 3000 },
+    // `strictPort` so a taken :3000 fails loudly instead of silently moving
+    // to :3001 — the app would then be running on a port that doesn't match
+    // SPOTIFY_REDIRECT_URI, so the OAuth callback lands on whatever old dev
+    // server is still squatting :3000 instead of this one.
+    server: { port: 3000, strictPort: true },
     plugins: [tsConfigPaths(), tanstackStart(), viteReact()],
     test: {
       environment: 'jsdom',

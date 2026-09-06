@@ -6,6 +6,7 @@ import { usePlaybackSDK } from '../client/usePlaybackSDK'
 import { useAlbumPalette } from '../client/useAlbumPalette'
 import { Visualizer } from '../client/Visualizer/Visualizer'
 import { PlayerChrome } from '../client/PlayerChrome'
+import { PlaylistPicker } from '../client/PlaylistPicker'
 
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
@@ -25,7 +26,7 @@ export const Route = createFileRoute('/')({
 })
 
 function Index() {
-  const { state, isActiveDevice, error, togglePlay, skipNext, skipPrevious, seek, setVolume, playHere } =
+  const { state, isActiveDevice, error, togglePlay, skipNext, skipPrevious, seek, setVolume, playTrack } =
     usePlaybackSDK(() => getPlaybackToken())
   const palette = useAlbumPalette(state?.albumArtUrl)
   const [bpm, setBpm] = useState(120)
@@ -58,13 +59,13 @@ function Index() {
     return <FullScreenMessage text="Your Spotify session expired. Redirecting to login..." />
   }
 
-  // Checked before `!state`: on a cold start both are falsy, and "Play here" is
-  // the actionable screen (this tab has to become the active Spotify device
-  // before any playback state can ever arrive).
+  // Checked before `!state`: on a cold start both are falsy, and picking a
+  // track is the actionable screen (this tab has to become the active
+  // Spotify device before any playback state can ever arrive).
   if (!isActiveDevice) {
     return (
-      <FullScreenMessage text="Select Aero Media Player as your Spotify device, or press Play here.">
-        <button onClick={playHere}>Play here</button>
+      <FullScreenMessage text="Select Aero Media Player as your Spotify device, or pick a track to play here.">
+        <PlaylistPicker onSelectTrack={playTrack} />
       </FullScreenMessage>
     )
   }
