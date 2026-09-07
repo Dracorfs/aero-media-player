@@ -1,3 +1,4 @@
+import { createServerFn } from '@tanstack/react-start'
 import { getStoredBackground, setStoredBackground, type BackgroundConfig } from './session'
 import * as fsp from 'node:fs/promises'
 import { join, basename } from 'node:path'
@@ -76,6 +77,18 @@ export async function applyBackground(data: BackgroundConfig): Promise<Backgroun
   return validated
 }
 
-// getStoredBackground is re-exported indirectly via Task 3's getBackgroundConfig
-// server function — imported here now so Task 3 doesn't need a new import line.
-export { getStoredBackground }
+export const getBackgroundConfig = createServerFn({ method: 'GET' }).handler(async () => getStoredBackground())
+
+export const setBackground = createServerFn({ method: 'POST' })
+  .validator((data: BackgroundConfig) => data)
+  .handler(async ({ data }) => applyBackground(data))
+
+export const listBackgroundImages = createServerFn({ method: 'GET' }).handler(async () => listBackgroundImageFiles())
+
+export const uploadBackgroundImage = createServerFn({ method: 'POST' })
+  .validator((data: FormData) => {
+    const file = data.get('image')
+    if (!(file instanceof File)) throw new Error('Missing image file')
+    return file
+  })
+  .handler(async ({ data }) => ({ filename: await saveBackgroundImageFile(data) }))
