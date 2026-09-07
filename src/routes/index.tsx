@@ -5,6 +5,9 @@ import { isNotAuthenticatedError } from '../shared/authError'
 import { usePlaybackSDK } from '../client/usePlaybackSDK'
 import { useAlbumPalette } from '../client/useAlbumPalette'
 import { gainToIntensity } from '../client/gainToIntensity'
+import { getBackgroundConfig, type BackgroundConfig } from '../server/background'
+import { VisualizerBackdrop } from '../client/VisualizerBackdrop'
+import { ConfigurationModal } from '../client/ConfigurationModal'
 import { Visualizer } from '../client/Visualizer/Visualizer'
 import { PlayerChrome } from '../client/PlayerChrome'
 import { PlaylistPicker } from '../client/PlaylistPicker'
@@ -32,6 +35,8 @@ function Index() {
     usePlaybackSDK(() => getPlaybackToken())
   const palette = useAlbumPalette(state?.albumArtUrl)
   const [dynamics, setDynamics] = useState<TrackDynamics>(DEFAULT_TRACK_DYNAMICS)
+  const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -41,6 +46,16 @@ function Index() {
       navigate({ to: '/login' })
     }
   }, [error, navigate])
+
+  useEffect(() => {
+    let cancelled = false
+    getBackgroundConfig().then((config) => {
+      if (!cancelled) setBackgroundConfig(config)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!state?.trackId) return
@@ -78,6 +93,7 @@ function Index() {
 
   return (
     <>
+      <VisualizerBackdrop config={backgroundConfig} />
       <Visualizer
         frame={{
           progressMs: state.progressMs,
@@ -99,7 +115,13 @@ function Index() {
         onSkipPrevious={skipPrevious}
         onSeek={seek}
         onVolumeChange={setVolume}
-        onOpenSettings={() => {}}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+      <ConfigurationModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        backgroundConfig={backgroundConfig}
+        onBackgroundConfigChange={setBackgroundConfig}
       />
     </>
   )

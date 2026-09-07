@@ -5,3 +5,4 @@ dist
 .vinxi
 .env
 src/routeTree.gen.ts
+public/backgrounds/
