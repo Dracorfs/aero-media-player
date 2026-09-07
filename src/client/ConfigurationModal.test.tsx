@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, fireEvent, cleanup, screen } from '@testing-library/react'
 import { ConfigurationModal } from './ConfigurationModal'
-import { setBackground } from '../server/background'
+import { setBackground, listBackgroundImages, uploadBackgroundImage } from '../server/background'
 
 vi.mock('../server/background', () => ({
   ALLOWED_BACKGROUND_COLORS: ['#0032db', '#0689e4', '#7aeafe', '#9fe11d', '#ccff7c', '#000000', '#ffffff'],
   setBackground: vi.fn(),
+  listBackgroundImages: vi.fn(),
+  uploadBackgroundImage: vi.fn(),
 }))
 
 afterEach(cleanup)
@@ -71,5 +73,40 @@ describe('ConfigurationModal', () => {
     fireEvent.click(container.querySelector('.configuration-modal__backdrop') as HTMLElement)
 
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('loads and shows uploaded images when switching to the Image tab', async () => {
+    vi.mocked(listBackgroundImages).mockResolvedValue(['sunset.jpg'])
+    render(<ConfigurationModal isOpen onClose={vi.fn()} backgroundConfig={null} onBackgroundConfigChange={vi.fn()} />)
+
+    fireEvent.click(screen.getByText('Image'))
+
+    expect(await screen.findByLabelText('Set background image sunset.jpg')).not.toBeNull()
+  })
+
+  it('uploading an image saves it and selects it', async () => {
+    vi.mocked(listBackgroundImages).mockResolvedValue([])
+    vi.mocked(uploadBackgroundImage).mockResolvedValue({ filename: 'new.png' })
+    vi.mocked(setBackground).mockResolvedValue(undefined as never)
+    const onBackgroundConfigChange = vi.fn()
+    render(
+      <ConfigurationModal
+        isOpen
+        onClose={vi.fn()}
+        backgroundConfig={null}
+        onBackgroundConfigChange={onBackgroundConfigChange}
+      />,
+    )
+
+    fireEvent.click(screen.getByText('Image'))
+    await screen.findByLabelText('Upload new image')
+
+    const file = new File(['x'], 'new.png', { type: 'image/png' })
+    fireEvent.change(screen.getByLabelText('Upload new image'), { target: { files: [file] } })
+
+    await vi.waitFor(() =>
+      expect(onBackgroundConfigChange).toHaveBeenCalledWith({ type: 'image', value: 'new.png' }),
+    )
+    expect(uploadBackgroundImage).toHaveBeenCalled()
   })
 })
