@@ -99,6 +99,7 @@ function Index() {
         onSkipPrevious={skipPrevious}
         onSeek={seek}
         onVolumeChange={setVolume}
+        onOpenSettings={() => {}}
       />
     </>
   )

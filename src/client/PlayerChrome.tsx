@@ -14,6 +14,7 @@ interface PlayerChromeProps {
   onSkipPrevious: () => void
   onSeek: (positionMs: number) => void
   onVolumeChange: (volume: number) => void
+  onOpenSettings: () => void
 }
 
 export function PlayerChrome({
@@ -27,6 +28,7 @@ export function PlayerChrome({
   onSkipPrevious,
   onSeek,
   onVolumeChange,
+  onOpenSettings,
 }: PlayerChromeProps) {
   // While the user drags, the slider is driven by local state so it doesn't
   // fight the coarse, event-driven `progressMs` prop (which would make the
@@ -80,6 +82,9 @@ export function PlayerChrome({
         </button>
         <button onClick={toggleCinemaMode} aria-label="Hide player">
           ◐
+        </button>
+        <button onClick={onOpenSettings} aria-label="Configuration">
+          ⚙
         </button>
       </div>
       <input

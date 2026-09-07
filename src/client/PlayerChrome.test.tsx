@@ -18,6 +18,7 @@ function renderChrome(overrides: Partial<Parameters<typeof PlayerChrome>[0]> = {
     onSkipPrevious: vi.fn(),
     onSeek,
     onVolumeChange: vi.fn(),
+    onOpenSettings: vi.fn(),
     ...overrides,
   }
   const utils = render(<PlayerChrome {...props} />)
@@ -55,6 +56,7 @@ describe('PlayerChrome seek slider', () => {
         onSkipPrevious={vi.fn()}
         onSeek={vi.fn()}
         onVolumeChange={vi.fn()}
+        onOpenSettings={vi.fn()}
       />,
     )
 
@@ -108,5 +110,16 @@ describe('PlayerChrome cinema mode', () => {
 
     expect(queryByText('Aqua')).not.toBeNull()
     expect(getByLabelText('Hide player')).not.toBeNull()
+  })
+})
+
+describe('PlayerChrome configuration', () => {
+  it('calls onOpenSettings when the configuration button is clicked', () => {
+    const onOpenSettings = vi.fn()
+    const { getByLabelText } = renderChrome({ onOpenSettings })
+
+    fireEvent.click(getByLabelText('Configuration'))
+
+    expect(onOpenSettings).toHaveBeenCalled()
   })
 })
