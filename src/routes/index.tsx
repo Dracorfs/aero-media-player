@@ -49,9 +49,11 @@ function Index() {
 
   useEffect(() => {
     let cancelled = false
-    getBackgroundConfig().then((config) => {
-      if (!cancelled) setBackgroundConfig(config)
-    })
+    getBackgroundConfig()
+      .then((config) => {
+        if (!cancelled) setBackgroundConfig(config)
+      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }

@@ -1,13 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { readdir, mkdir, writeFile } from 'node:fs/promises'
-import {
-  ALLOWED_BACKGROUND_COLORS,
-  isAllowedColor,
-  sanitizeImageFilename,
-  listBackgroundImageFiles,
-  saveBackgroundImageFile,
-  applyBackground,
-} from './background'
+import { listBackgroundImageFiles, saveBackgroundImageFile, applyBackground } from './backgroundStorage'
 import { setStoredBackground } from './session'
 
 vi.mock('node:fs/promises', async (importOriginal) => {
@@ -29,39 +22,9 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('isAllowedColor', () => {
-  it('accepts every color in the allowed palette', () => {
-    for (const color of ALLOWED_BACKGROUND_COLORS) {
-      expect(isAllowedColor(color)).toBe(true)
-    }
-  })
-
-  it('rejects a color outside the allowed palette', () => {
-    expect(isAllowedColor('#123456')).toBe(false)
-  })
-})
-
-describe('sanitizeImageFilename', () => {
-  it('accepts a plain filename', () => {
-    expect(sanitizeImageFilename('sunset.jpg')).toBe('sunset.jpg')
-  })
-
-  it('rejects a path traversal attempt', () => {
-    expect(sanitizeImageFilename('../../etc/passwd')).toBeNull()
-  })
-
-  it('rejects a filename containing a slash', () => {
-    expect(sanitizeImageFilename('a/b.png')).toBeNull()
-  })
-
-  it('rejects a filename with no extension', () => {
-    expect(sanitizeImageFilename('sunset')).toBeNull()
-  })
-})
-
 describe('listBackgroundImageFiles', () => {
-  it('returns the directory listing', async () => {
-    vi.mocked(readdir).mockResolvedValue(['a.jpg', 'b.png'] as never)
+  it('returns the directory listing filtered to allowed image extensions', async () => {
+    vi.mocked(readdir).mockResolvedValue(['a.jpg', 'b.png', '.DS_Store'] as never)
     expect(await listBackgroundImageFiles()).toEqual(['a.jpg', 'b.png'])
   })
 

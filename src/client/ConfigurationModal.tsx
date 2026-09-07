@@ -27,8 +27,20 @@ export function ConfigurationModal({
 
   useEffect(() => {
     if (!isOpen || mode !== 'image' || images !== null) return
-    listBackgroundImages().then(setImages)
+    listBackgroundImages()
+      .then(setImages)
+      .catch(() => {
+        setError("Couldn't load your images. Try again.")
+        setImages([])
+      })
   }, [isOpen, mode, images])
+
+  useEffect(() => {
+    if (!isOpen) {
+      setError(null)
+      setMode('color')
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
