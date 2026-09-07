@@ -5,12 +5,19 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 
 const BAR_COUNT = 32
 
+// Slowdown factors applied on top of the real per-track bpm so the pulse
+// reads as music-reactive without feeling frantic — the carpet is calmed
+// down more aggressively than the bars since it's a background element.
+const BAR_SPEED_FACTOR = 0.75 // 25% slower
+const CARPET_SPEED_FACTOR = 0.5 // 50% slower
+
 export interface VisualizerFrame {
   progressMs: number
   durationMs: number
   bpm: number
   palette: string[]
   isPlaying: boolean
+  volumeIntensity: number
 }
 
 /**
@@ -67,7 +74,7 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
     bars.push(bar)
   }
 
-  const waveGeometry = new THREE.PlaneGeometry(20, 6, 80, 1)
+  const waveGeometry = new THREE.PlaneGeometry(20, 6, 80, 16)
   const waveMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xc9d6df,
     metalness: 0.3,
@@ -92,6 +99,7 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
     bpm: 120,
     palette: ['#7fd8e8', '#c9d6df', '#3fa9c9', '#e8f4f8'],
     isPlaying: false,
+    volumeIntensity: 1,
   }
   let rafId: number | null = null
   let lastTimestamp = performance.now()
@@ -108,22 +116,31 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
       elapsedProgressMs += deltaMs
     }
 
-    const beatMs = 60000 / frame.bpm
+    const beatMs = 60000 / (frame.bpm * BAR_SPEED_FACTOR)
     const beatPhase = (elapsedProgressMs % beatMs) / beatMs
     const palette = frame.palette.length > 0 ? frame.palette : ['#7fd8e8']
 
     bars.forEach((bar, i) => {
       const barPhase = (beatPhase + i / BAR_COUNT) % 1
-      const height = 0.6 + Math.abs(Math.sin(barPhase * Math.PI * 2)) * 3
+      const height = 0.6 + Math.abs(Math.sin(barPhase * Math.PI * 2)) * 3 * frame.volumeIntensity
       bar.scale.y = height
       bar.position.y = height / 2 - 1.5
       const material = bar.material as THREE.MeshPhysicalMaterial
       material.color.set(palette[i % palette.length])
     })
 
+    const carpetBeatMs = 60000 / (frame.bpm * CARPET_SPEED_FACTOR)
+    const carpetBeatPhase = (elapsedProgressMs % carpetBeatMs) / carpetBeatMs
+    const pulse = Math.abs(Math.sin(carpetBeatPhase * Math.PI * 2))
+    const carpetElapsedMs = elapsedProgressMs * CARPET_SPEED_FACTOR
+
     for (let i = 0; i < wavePositions.count; i++) {
       const x = wavePositions.getX(i)
-      const z = Math.sin(x * 0.5 + elapsedProgressMs * 0.002) * 0.4
+      const y = wavePositions.getY(i)
+      const xWave = Math.sin(x * 0.5 + carpetElapsedMs * 0.002)
+      const depthWave = Math.sin(y * 0.9 + x * 0.15 - carpetElapsedMs * 0.0015)
+      const amplitude = (0.25 + pulse * 0.35) * frame.volumeIntensity
+      const z = (xWave * 0.6 + depthWave * 0.4) * amplitude
       wavePositions.setZ(i, z)
     }
     wavePositions.needsUpdate = true

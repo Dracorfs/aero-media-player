@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { isExpiringSoon, fetchTempo, fetchPlaylists, fetchPlaylistTracks, postPlayInContext } from './spotify-api'
+import {
+  isExpiringSoon,
+  fetchTrackIsrc,
+  fetchTrackDynamics,
+  DEFAULT_TRACK_DYNAMICS,
+  fetchPlaylists,
+  fetchPlaylistTracks,
+  postPlayInContext,
+} from './spotify-api'
 import { isNotAuthenticatedError } from '../shared/authError'
 import { MissingEnvVarError } from './env'
 
@@ -24,29 +32,72 @@ describe('isExpiringSoon', () => {
   })
 })
 
-describe('fetchTempo', () => {
-  it('returns the tempo from a successful response', async () => {
+describe('fetchTrackIsrc', () => {
+  it('returns the ISRC from a successful track lookup', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ tempo: 128.4 }) }),
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ external_ids: { isrc: 'USMC16356894' } }) }),
     )
 
-    expect(await fetchTempo('track-1', 'token')).toBe(128.4)
+    expect(await fetchTrackIsrc('track-1', 'token')).toBe('USMC16356894')
   })
 
-  it('falls back to 120 BPM on a non-ok response (e.g. deprecated-endpoint 403)', async () => {
+  it('returns null when the track has no ISRC', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ external_ids: {} }) }))
+
+    expect(await fetchTrackIsrc('track-1', 'token')).toBeNull()
+  })
+
+  it('returns null on a non-ok response', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403 }))
 
-    expect(await fetchTempo('track-1', 'token')).toBe(120)
+    expect(await fetchTrackIsrc('track-1', 'token')).toBeNull()
   })
 
-  it('falls back to 120 BPM when the fetch itself throws', async () => {
+  it('returns null when the fetch itself throws', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network error')))
+
+    expect(await fetchTrackIsrc('track-1', 'token')).toBeNull()
+  })
+})
+
+describe('fetchTrackDynamics', () => {
+  it('returns Deezer bpm/gain when the Spotify track has an ISRC Deezer recognizes', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockRejectedValue(new Error('network error')),
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ external_ids: { isrc: 'USMC16356894' } }) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ bpm: 153.7, gain: -12 }) }),
     )
 
-    expect(await fetchTempo('track-1', 'token')).toBe(120)
+    expect(await fetchTrackDynamics('track-1', 'token')).toEqual({ bpm: 153.7, gain: -12 })
+  })
+
+  it('falls back to defaults, without calling Deezer, when the Spotify track has no ISRC', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ external_ids: {} }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await fetchTrackDynamics('track-1', 'token')).toEqual(DEFAULT_TRACK_DYNAMICS)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('falls back to defaults when the Spotify track lookup responds with a non-ok status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 403 }))
+
+    expect(await fetchTrackDynamics('track-1', 'token')).toEqual(DEFAULT_TRACK_DYNAMICS)
+  })
+
+  it('falls back to defaults when Deezer has no usable bpm/gain for the ISRC', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ external_ids: { isrc: 'USMC16356894' } }) })
+        .mockResolvedValueOnce({ ok: false, status: 404 }),
+    )
+
+    expect(await fetchTrackDynamics('track-1', 'token')).toEqual(DEFAULT_TRACK_DYNAMICS)
   })
 })
 

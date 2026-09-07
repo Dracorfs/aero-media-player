@@ -2,6 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { getSpotifySession, setSpotifySession, clearSpotifySession } from './session'
 import { refreshAccessToken } from './spotify-auth'
 import { NOT_AUTHENTICATED_MESSAGE } from '../shared/authError'
+import { fetchDeezerDynamics } from './deezer-api'
 
 const EXPIRY_BUFFER_MS = 60_000
 
@@ -38,33 +39,51 @@ async function getValidAccessToken(): Promise<string> {
 
 export const getPlaybackToken = createServerFn({ method: 'GET' }).handler(async () => getValidAccessToken())
 
-const DEFAULT_BPM = 120
+export interface TrackDynamics {
+  bpm: number
+  gain: number
+}
 
-export async function fetchTempo(trackId: string, accessToken: string): Promise<number> {
+const DEFAULT_BPM = 120
+// Midpoint of the modeled Deezer gain range [-15, 0] dB (see gainToIntensity)
+// so a failed lookup lands the derived bar intensity in the middle of its
+// range rather than at either visual extreme.
+const DEFAULT_GAIN_DB = -7.5
+export const DEFAULT_TRACK_DYNAMICS: TrackDynamics = { bpm: DEFAULT_BPM, gain: DEFAULT_GAIN_DB }
+
+export async function fetchTrackIsrc(trackId: string, accessToken: string): Promise<string | null> {
   try {
-    const response = await fetch(`https://api.spotify.com/v1/audio-features/${trackId}`, {
+    const response = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!response.ok) return DEFAULT_BPM
+    if (!response.ok) return null
 
-    const body = (await response.json()) as { tempo?: number }
-    return typeof body.tempo === 'number' ? body.tempo : DEFAULT_BPM
+    const body = (await response.json()) as { external_ids?: { isrc?: string } }
+    return body.external_ids?.isrc ?? null
   } catch {
-    return DEFAULT_BPM
+    return null
   }
 }
 
-export const getTempo = createServerFn({ method: 'GET' })
+export async function fetchTrackDynamics(trackId: string, accessToken: string): Promise<TrackDynamics> {
+  const isrc = await fetchTrackIsrc(trackId, accessToken)
+  if (!isrc) return DEFAULT_TRACK_DYNAMICS
+
+  const dynamics = await fetchDeezerDynamics(isrc)
+  return dynamics ?? DEFAULT_TRACK_DYNAMICS
+}
+
+export const getTrackDynamics = createServerFn({ method: 'GET' })
   .validator((data: { trackId: string }) => data)
   .handler(async ({ data }) => {
     let accessToken: string
     try {
       accessToken = await getValidAccessToken()
     } catch {
-      // Tempo is best-effort decoration — never surface auth trouble here.
-      return DEFAULT_BPM
+      // Dynamics are best-effort decoration — never surface auth trouble here.
+      return DEFAULT_TRACK_DYNAMICS
     }
-    return fetchTempo(data.trackId, accessToken)
+    return fetchTrackDynamics(data.trackId, accessToken)
   })
 
 export interface Playlist {

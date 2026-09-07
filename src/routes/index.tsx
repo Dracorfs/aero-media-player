@@ -1,9 +1,10 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState, type ReactNode } from 'react'
-import { getPlaybackToken, getTempo } from '../server/spotify-api'
+import { getPlaybackToken, getTrackDynamics, DEFAULT_TRACK_DYNAMICS, type TrackDynamics } from '../server/spotify-api'
 import { isNotAuthenticatedError } from '../shared/authError'
 import { usePlaybackSDK } from '../client/usePlaybackSDK'
 import { useAlbumPalette } from '../client/useAlbumPalette'
+import { gainToIntensity } from '../client/gainToIntensity'
 import { Visualizer } from '../client/Visualizer/Visualizer'
 import { PlayerChrome } from '../client/PlayerChrome'
 import { PlaylistPicker } from '../client/PlaylistPicker'
@@ -30,7 +31,7 @@ function Index() {
   const { state, isActiveDevice, error, togglePlay, skipNext, skipPrevious, seek, setVolume, playTrack } =
     usePlaybackSDK(() => getPlaybackToken())
   const palette = useAlbumPalette(state?.albumArtUrl)
-  const [bpm, setBpm] = useState(120)
+  const [dynamics, setDynamics] = useState<TrackDynamics>(DEFAULT_TRACK_DYNAMICS)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -44,8 +45,8 @@ function Index() {
   useEffect(() => {
     if (!state?.trackId) return
     let cancelled = false
-    getTempo({ data: { trackId: state.trackId } }).then((tempo) => {
-      if (!cancelled) setBpm(tempo)
+    getTrackDynamics({ data: { trackId: state.trackId } }).then((next) => {
+      if (!cancelled) setDynamics(next)
     })
     return () => {
       cancelled = true
@@ -81,9 +82,10 @@ function Index() {
         frame={{
           progressMs: state.progressMs,
           durationMs: state.durationMs,
-          bpm,
+          bpm: dynamics.bpm,
           palette,
           isPlaying: state.isPlaying,
+          volumeIntensity: gainToIntensity(dynamics.gain),
         }}
       />
       <PlayerChrome
