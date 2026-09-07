@@ -2,7 +2,9 @@ import { useSession, updateSession, clearSession } from '@tanstack/react-start/s
 import type { SpotifyTokens } from './spotify-auth'
 import { assertServerEnv, requireEnv } from './env'
 
-export type SpotifySession = SpotifyTokens
+export type BackgroundConfig = { type: 'color'; value: string } | { type: 'image'; value: string }
+
+export type SpotifySession = SpotifyTokens & { background?: BackgroundConfig }
 
 /**
  * Built lazily (not at module load) so the env check runs on the server at
@@ -24,6 +26,15 @@ export async function getSpotifySession() {
 
 export async function setSpotifySession(tokens: SpotifyTokens): Promise<void> {
   await updateSession(sessionConfig(), tokens)
+}
+
+export async function getStoredBackground(): Promise<BackgroundConfig | null> {
+  const session = await getSpotifySession()
+  return session.data.background ?? null
+}
+
+export async function setStoredBackground(background: BackgroundConfig): Promise<void> {
+  await updateSession(sessionConfig(), { background })
 }
 
 export async function clearSpotifySession(): Promise<void> {
