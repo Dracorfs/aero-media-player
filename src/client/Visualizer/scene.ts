@@ -51,19 +51,26 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
   camera.position.set(0, 4, 14)
   camera.lookAt(0, 0, 0)
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4))
-  const keyLight = new THREE.PointLight(0xffffff, 2, 50)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7))
+  const keyLight = new THREE.PointLight(0xffffff, 2.5, 50)
   keyLight.position.set(5, 10, 8)
   scene.add(keyLight)
+  const fillLight = new THREE.PointLight(0xffffff, 1.2, 50)
+  fillLight.position.set(-6, 6, 10)
+  scene.add(fillLight)
 
   const barGeometry = new THREE.BoxGeometry(0.4, 1, 0.4)
+  // Low metalness with no environment map: a metallic surface reflects only
+  // its environment, and without one it reads as near-black regardless of
+  // `color` — only its direct specular highlight would show. Keeping
+  // metalness low lets the diffuse term actually display each bar's color.
   const barMaterial = new THREE.MeshPhysicalMaterial({
     color: 0x7fd8e8,
-    metalness: 0.6,
-    roughness: 0.15,
+    metalness: 0.15,
+    roughness: 0.3,
     clearcoat: 1,
     clearcoatRoughness: 0.1,
-    transmission: 0.2,
+    transmission: 0,
   })
 
   const bars: THREE.Mesh[] = []
