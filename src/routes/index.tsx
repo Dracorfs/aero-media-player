@@ -7,6 +7,7 @@ import { useAlbumPalette } from '../client/useAlbumPalette'
 import { Visualizer } from '../client/Visualizer/Visualizer'
 import { PlayerChrome } from '../client/PlayerChrome'
 import { PlaylistPicker } from '../client/PlaylistPicker'
+import './FullScreenMessage.css'
 
 export const Route = createFileRoute('/')({
   beforeLoad: async () => {
@@ -103,9 +104,9 @@ function Index() {
 
 function FullScreenMessage({ text, children }: { text: string; children?: ReactNode }) {
   return (
-    <div style={{ display: 'grid', placeItems: 'center', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
-      <div style={{ textAlign: 'center' }}>
-        <p>{text}</p>
+    <div className="full-screen-message">
+      <div className="full-screen-message__content">
+        <p className="full-screen-message__text">{text}</p>
         {children}
       </div>
     </div>

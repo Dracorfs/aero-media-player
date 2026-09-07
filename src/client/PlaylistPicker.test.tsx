@@ -73,7 +73,7 @@ describe('PlaylistPicker', () => {
     render(<PlaylistPicker onSelectTrack={vi.fn()} />)
     fireEvent.click(await screen.findByText('Chill'))
     await screen.findByText(/Song A/)
-    fireEvent.click(screen.getByText(/back/i))
+    fireEvent.click(screen.getByRole('button', { name: /back/i }))
 
     expect(await screen.findByText('Focus')).toBeInTheDocument()
   })

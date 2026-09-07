@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getPlaylists, getPlaylistTracks, type Playlist, type PlaylistTrack } from '../server/spotify-api'
+import './PlaylistPicker.css'
 
 interface PlaylistPickerProps {
   onSelectTrack: (contextUri: string, trackUri: string) => void
@@ -26,22 +27,33 @@ export function PlaylistPicker({ onSelectTrack }: PlaylistPickerProps) {
   }, [selected])
 
   if (error) {
-    return <p>Couldn't load your playlists. Try logging in again.</p>
+    return (
+      <div className="playlist-picker">
+        <p className="playlist-picker__status">Couldn't load your playlists. Try logging in again.</p>
+      </div>
+    )
   }
 
   if (selected) {
     return (
-      <div>
-        <button onClick={() => setSelected(null)}>Back</button>
-        <h2>{selected.name}</h2>
+      <div className="playlist-picker">
+        <div className="playlist-picker__header">
+          <button className="playlist-picker__back" onClick={() => setSelected(null)} aria-label="Back">
+            ‹
+          </button>
+          <h2 className="playlist-picker__title">{selected.name}</h2>
+        </div>
         {tracks === null ? (
-          <p>Loading tracks...</p>
+          <p className="playlist-picker__status">Loading tracks...</p>
         ) : (
-          <ul>
+          <ul className="playlist-picker__list">
             {tracks.map((track) => (
               <li key={track.uri}>
-                <button onClick={() => onSelectTrack(selected.uri, track.uri)}>
-                  {track.name} — {track.artists}
+                <button
+                  className="playlist-picker__item"
+                  onClick={() => onSelectTrack(selected.uri, track.uri)}
+                >
+                  {track.name} <span className="playlist-picker__track-artists">— {track.artists}</span>
                 </button>
               </li>
             ))}
@@ -52,16 +64,24 @@ export function PlaylistPicker({ onSelectTrack }: PlaylistPickerProps) {
   }
 
   if (playlists === null) {
-    return <p>Loading your playlists...</p>
+    return (
+      <div className="playlist-picker">
+        <p className="playlist-picker__status">Loading your playlists...</p>
+      </div>
+    )
   }
 
   return (
-    <ul>
-      {playlists.map((playlist) => (
-        <li key={playlist.id}>
-          <button onClick={() => setSelected(playlist)}>{playlist.name}</button>
-        </li>
-      ))}
-    </ul>
+    <div className="playlist-picker">
+      <ul className="playlist-picker__list">
+        {playlists.map((playlist) => (
+          <li key={playlist.id}>
+            <button className="playlist-picker__item" onClick={() => setSelected(playlist)}>
+              {playlist.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

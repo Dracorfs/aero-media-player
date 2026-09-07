@@ -1,0 +1,25 @@
+.full-screen-message {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  font-family: system-ui, sans-serif;
+  background: linear-gradient(180deg, #eaf6fb 0%, #cdeaf2 45%, #8fd3e8 100%);
+  color: #0a2a35;
+}
+
+.full-screen-message__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  max-height: 90vh;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.full-screen-message__text {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
