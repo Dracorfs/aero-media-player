@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useFullscreen } from './useFullscreen'
 import './PlayerChrome.css'
 
 interface PlayerChromeProps {
@@ -31,6 +32,7 @@ export function PlayerChrome({
   // thumb freeze or jump backwards mid-drag). The seek is issued once, on
   // release, instead of on every drag step.
   const [draggedMs, setDraggedMs] = useState<number | null>(null)
+  const { isFullscreen, toggleFullscreen } = useFullscreen()
 
   function commitSeek() {
     if (draggedMs === null) return
@@ -53,6 +55,12 @@ export function PlayerChrome({
         </button>
         <button onClick={onSkipNext} aria-label="Next track">
           ⏭
+        </button>
+        <button
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        >
+          {isFullscreen ? '⤡' : '⤢'}
         </button>
       </div>
       <input
