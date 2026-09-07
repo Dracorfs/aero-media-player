@@ -71,3 +71,42 @@ describe('PlayerChrome seek slider', () => {
     expect(seek.value).toBe('10000')
   })
 })
+
+describe('PlayerChrome cinema mode', () => {
+  it('shows the full panel and a "Hide player" button by default', () => {
+    const { getByLabelText, queryByLabelText } = renderChrome()
+
+    expect(getByLabelText('Hide player')).not.toBeNull()
+    expect(queryByLabelText('Show player')).toBeNull()
+  })
+
+  it('hides the panel and shows neither button immediately on entering cinema mode', () => {
+    const { getByLabelText, queryByLabelText, queryByText } = renderChrome()
+
+    fireEvent.click(getByLabelText('Hide player'))
+
+    expect(queryByText('Aqua')).toBeNull()
+    expect(queryByLabelText('Hide player')).toBeNull()
+    expect(queryByLabelText('Show player')).toBeNull()
+  })
+
+  it('reveals the "Show player" button on mouse move after entering cinema mode', () => {
+    const { getByLabelText, queryByLabelText } = renderChrome()
+
+    fireEvent.click(getByLabelText('Hide player'))
+    fireEvent.mouseMove(window)
+
+    expect(queryByLabelText('Show player')).not.toBeNull()
+  })
+
+  it('restores the full panel when "Show player" is clicked', () => {
+    const { getByLabelText, queryByText } = renderChrome()
+
+    fireEvent.click(getByLabelText('Hide player'))
+    fireEvent.mouseMove(window)
+    fireEvent.click(getByLabelText('Show player'))
+
+    expect(queryByText('Aqua')).not.toBeNull()
+    expect(getByLabelText('Hide player')).not.toBeNull()
+  })
+})

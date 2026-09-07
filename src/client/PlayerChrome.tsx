@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useFullscreen } from './useFullscreen'
+import { useCinemaMode } from './useCinemaMode'
 import './PlayerChrome.css'
 
 interface PlayerChromeProps {
@@ -33,11 +34,26 @@ export function PlayerChrome({
   // release, instead of on every drag step.
   const [draggedMs, setDraggedMs] = useState<number | null>(null)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
+  const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
 
   function commitSeek() {
     if (draggedMs === null) return
     onSeek(draggedMs)
     setDraggedMs(null)
+  }
+
+  if (isCinemaMode) {
+    if (!isRevealVisible) return null
+    return (
+      <button
+        type="button"
+        onClick={toggleCinemaMode}
+        aria-label="Show player"
+        className="player-chrome__reveal"
+      >
+        ◑
+      </button>
+    )
   }
 
   return (
@@ -61,6 +77,9 @@ export function PlayerChrome({
           aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
           {isFullscreen ? '⤡' : '⤢'}
+        </button>
+        <button onClick={toggleCinemaMode} aria-label="Hide player">
+          ◐
         </button>
       </div>
       <input
