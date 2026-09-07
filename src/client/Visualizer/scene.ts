@@ -1,7 +1,4 @@
 import * as THREE from 'three'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 
 const BAR_COUNT = 32
 
@@ -96,10 +93,6 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
   wave.position.y = -2
   scene.add(wave)
 
-  const composer = new EffectComposer(renderer)
-  composer.addPass(new RenderPass(scene, camera))
-  composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.9, 0.6, 0.1))
-
   let frame: VisualizerFrame = {
     progressMs: 0,
     durationMs: 1,
@@ -152,7 +145,7 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
     }
     wavePositions.needsUpdate = true
 
-    composer.render()
+    renderer.render(scene, camera)
   }
   rafId = requestAnimationFrame(animate)
 
@@ -170,7 +163,6 @@ export function createVisualizerScene(canvas: HTMLCanvasElement): VisualizerHand
       camera.aspect = width / height
       camera.updateProjectionMatrix()
       renderer.setSize(width, height)
-      composer.setSize(width, height)
     },
     dispose: () => {
       if (rafId !== null) cancelAnimationFrame(rafId)
