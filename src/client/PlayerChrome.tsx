@@ -76,11 +76,11 @@ export function PlayerChrome({
       />
       <div className="player-chrome__row">
         <div className="player-chrome__readout">
-          <div className="player-chrome__title">{trackName}</div>
-          <div className="player-chrome__artists">{artists}</div>
-          <div className="player-chrome__time">
-            {formatTime(draggedMs ?? progressMs)} / {formatTime(durationMs)}
+          <div className="player-chrome__title-row">
+            <span className="player-chrome__title">{trackName}</span>
+            <span className="player-chrome__time">{formatTime(draggedMs ?? progressMs)}</span>
           </div>
+          <div className="player-chrome__artists">{artists}</div>
         </div>
         <div className="player-chrome__controls">
           <button className="player-chrome__icon-btn" onClick={onSkipPrevious} aria-label="Previous track">
