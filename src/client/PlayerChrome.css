@@ -107,6 +107,19 @@
   background: rgba(255, 255, 255, 0.55);
 }
 
+/* Prev/next round only their outer corner — the inner edge stays flat and
+   borderless so they read as one continuous cluster with the play button
+   nested between them, matching WMP's transport strip. */
+.player-chrome__icon-btn--prev {
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+.player-chrome__icon-btn--next {
+  border-radius: 0 4px 4px 0;
+  border-left: none;
+}
+
 /* The oversized, glossy circular play button is WMP 11's signature
    element — every other control is a small flat icon around it. */
 .player-chrome__play-btn {
@@ -122,6 +135,9 @@
   color: #ffffff;
   font-size: 1.1rem;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
+  margin: 0 -3px;
 }
 
 .player-chrome__play-btn:hover {

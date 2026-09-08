@@ -83,13 +83,21 @@ export function PlayerChrome({
           <div className="player-chrome__artists">{artists}</div>
         </div>
         <div className="player-chrome__controls">
-          <button className="player-chrome__icon-btn" onClick={onSkipPrevious} aria-label="Previous track">
+          <button
+            className="player-chrome__icon-btn player-chrome__icon-btn--prev"
+            onClick={onSkipPrevious}
+            aria-label="Previous track"
+          >
             ⏮
           </button>
           <button className="player-chrome__play-btn" onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
             {isPlaying ? '⏸' : '▶'}
           </button>
-          <button className="player-chrome__icon-btn" onClick={onSkipNext} aria-label="Next track">
+          <button
+            className="player-chrome__icon-btn player-chrome__icon-btn--next"
+            onClick={onSkipNext}
+            aria-label="Next track"
+          >
             ⏭
           </button>
         </div>
