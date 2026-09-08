@@ -60,33 +60,6 @@ export function PlayerChrome({
 
   return (
     <div className="player-chrome">
-      <div className="player-chrome__track">
-        <div className="player-chrome__title">{trackName}</div>
-        <div className="player-chrome__artists">{artists}</div>
-      </div>
-      <div className="player-chrome__controls">
-        <button onClick={onSkipPrevious} aria-label="Previous track">
-          ⏮
-        </button>
-        <button onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
-          {isPlaying ? '⏸' : '▶'}
-        </button>
-        <button onClick={onSkipNext} aria-label="Next track">
-          ⏭
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-        >
-          {isFullscreen ? '⤡' : '⤢'}
-        </button>
-        <button onClick={toggleCinemaMode} aria-label="Hide player">
-          ◐
-        </button>
-        <button onClick={onOpenSettings} aria-label="Configuration">
-          ⚙
-        </button>
-      </div>
       <input
         type="range"
         min={0}
@@ -101,15 +74,58 @@ export function PlayerChrome({
         aria-label="Seek"
         className="player-chrome__seek"
       />
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.01}
-        defaultValue={0.5}
-        onChange={(e) => onVolumeChange(Number(e.target.value))}
-        className="player-chrome__volume"
-      />
+      <div className="player-chrome__row">
+        <div className="player-chrome__readout">
+          <div className="player-chrome__title">{trackName}</div>
+          <div className="player-chrome__artists">{artists}</div>
+          <div className="player-chrome__time">
+            {formatTime(draggedMs ?? progressMs)} / {formatTime(durationMs)}
+          </div>
+        </div>
+        <div className="player-chrome__controls">
+          <button className="player-chrome__icon-btn" onClick={onSkipPrevious} aria-label="Previous track">
+            ⏮
+          </button>
+          <button className="player-chrome__play-btn" onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
+            {isPlaying ? '⏸' : '▶'}
+          </button>
+          <button className="player-chrome__icon-btn" onClick={onSkipNext} aria-label="Next track">
+            ⏭
+          </button>
+        </div>
+        <div className="player-chrome__extras">
+          <span className="player-chrome__volume-icon">🔊</span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            defaultValue={0.5}
+            onChange={(e) => onVolumeChange(Number(e.target.value))}
+            className="player-chrome__volume"
+          />
+          <button
+            className="player-chrome__icon-btn"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? '⤡' : '⤢'}
+          </button>
+          <button className="player-chrome__icon-btn" onClick={toggleCinemaMode} aria-label="Hide player">
+            ◐
+          </button>
+          <button className="player-chrome__icon-btn" onClick={onOpenSettings} aria-label="Configuration">
+            ⚙
+          </button>
+        </div>
+      </div>
     </div>
   )
+}
+
+function formatTime(ms: number): string {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
