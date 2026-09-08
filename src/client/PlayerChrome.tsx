@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useFullscreen } from './useFullscreen'
 import { useCinemaMode } from './useCinemaMode'
+import { useLiveProgress } from './useLiveProgress'
 import './PlayerChrome.css'
 
 interface PlayerChromeProps {
@@ -35,6 +36,7 @@ export function PlayerChrome({
   // thumb freeze or jump backwards mid-drag). The seek is issued once, on
   // release, instead of on every drag step.
   const [draggedMs, setDraggedMs] = useState<number | null>(null)
+  const liveProgressMs = useLiveProgress(progressMs, isPlaying, durationMs)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
 
@@ -64,7 +66,7 @@ export function PlayerChrome({
         type="range"
         min={0}
         max={durationMs}
-        value={draggedMs ?? progressMs}
+        value={draggedMs ?? liveProgressMs}
         onChange={(e) => setDraggedMs(Number(e.target.value))}
         onPointerUp={commitSeek}
         onMouseUp={commitSeek}
@@ -78,7 +80,7 @@ export function PlayerChrome({
         <div className="player-chrome__readout">
           <div className="player-chrome__title-row">
             <span className="player-chrome__title">{trackName}</span>
-            <span className="player-chrome__time">{formatTime(draggedMs ?? progressMs)}</span>
+            <span className="player-chrome__time">{formatTime(draggedMs ?? liveProgressMs)}</span>
           </div>
           <div className="player-chrome__artists">{artists}</div>
         </div>
