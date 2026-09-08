@@ -110,6 +110,11 @@
 /* Prev/next round only their outer corner — the inner edge stays flat and
    borderless so they read as one continuous cluster with the play button
    nested between them, matching WMP's transport strip. */
+.player-chrome__icon-btn--prev,
+.player-chrome__icon-btn--next {
+  height: 2.75rem;
+}
+
 .player-chrome__icon-btn--prev {
   border-radius: 4px 0 0 4px;
   border-right: none;
