@@ -6,6 +6,9 @@ export const ALLOWED_BACKGROUND_COLORS = [
   '#ccff7c',
   '#000000',
   '#ffffff',
+  '#fbb905',
+  '#fc720f',
+  '#d55e0f',
 ] as const
 
 export type BackgroundConfig = { type: 'color'; value: string } | { type: 'image'; value: string }
