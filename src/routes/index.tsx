@@ -108,7 +108,6 @@ function Index() {
       />
       <PlayerChrome
         trackName={state.name}
-        artists={state.artists}
         isPlaying={state.isPlaying}
         progressMs={state.progressMs}
         durationMs={state.durationMs}

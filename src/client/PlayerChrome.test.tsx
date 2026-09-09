@@ -9,7 +9,6 @@ function renderChrome(overrides: Partial<Parameters<typeof PlayerChrome>[0]> = {
   const onSeek = vi.fn()
   const props = {
     trackName: 'Aqua',
-    artists: 'Aero',
     isPlaying: true,
     progressMs: 10_000,
     durationMs: 200_000,
@@ -47,7 +46,6 @@ describe('PlayerChrome seek slider', () => {
     rerender(
       <PlayerChrome
         trackName="Aqua"
-        artists="Aero"
         isPlaying
         progressMs={12_000}
         durationMs={200_000}

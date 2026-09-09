@@ -7,7 +7,6 @@ import './PlayerChrome.css'
 
 interface PlayerChromeProps {
   trackName: string
-  artists: string
   isPlaying: boolean
   progressMs: number
   durationMs: number
@@ -21,7 +20,6 @@ interface PlayerChromeProps {
 
 export function PlayerChrome({
   trackName,
-  artists,
   isPlaying,
   progressMs,
   durationMs,
@@ -84,7 +82,6 @@ export function PlayerChrome({
             <span className="player-chrome__title">{trackName}</span>
             <span className="player-chrome__time">{formatTime(draggedMs ?? liveProgressMs)}</span>
           </div>
-          <div className="player-chrome__artists">{artists}</div>
         </div>
         <div className="player-chrome__controls">
           <button

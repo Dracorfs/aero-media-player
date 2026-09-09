@@ -54,14 +54,6 @@
   min-width: 0;
 }
 
-.player-chrome__artists {
-  font-size: 0.75rem;
-  opacity: 0.75;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .player-chrome__time {
   font-family: 'Courier New', monospace;
   font-size: 0.7rem;
