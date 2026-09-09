@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFullscreen } from './useFullscreen'
 import { useCinemaMode } from './useCinemaMode'
 import { useLiveProgress } from './useLiveProgress'
+import { useMediaShortcuts } from './useMediaShortcuts'
 import './PlayerChrome.css'
 
 interface PlayerChromeProps {
@@ -39,6 +40,7 @@ export function PlayerChrome({
   const liveProgressMs = useLiveProgress(progressMs, isPlaying, durationMs)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
+  useMediaShortcuts(onTogglePlay, toggleFullscreen)
 
   function commitSeek() {
     if (draggedMs === null) return
