@@ -83,9 +83,11 @@ export function ConfigurationModal({
       <div className="configuration-modal" onClick={(e) => e.stopPropagation()}>
         <div className="configuration-modal__titlebar">
           <span className="configuration-modal__title">Background</span>
-          <button className="configuration-modal__close" onClick={onClose} aria-label="Close configuration">
-            ×
-          </button>
+          <div className="configuration-modal__controls">
+            <button className="configuration-modal__close" onClick={onClose} aria-label="Close configuration">
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="configuration-modal__body">

@@ -12,59 +12,79 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  border: 1px solid rgba(20, 60, 90, 0.5);
+  border: 1px solid #000000b3;
   box-shadow: 0 8px 32px rgba(0, 30, 50, 0.45);
   color: #0a2a35;
   font-family: system-ui, sans-serif;
 }
 
-/* Classic Vista/7 "Aero" glass title bar — glossy blue gradient with a
-   highlight band near the top, matching frutiger-aero.org's reference. */
+/* Windows 7 "Aero" glass title bar, using the exact tokens from 7.css
+   (khang-nd.github.io/7.css, the library behind frutiger-aero.org's
+   reference window): a solid blue base with a horizontal white/black
+   sheen overlay, not a vertical gradient. */
 .configuration-modal__titlebar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex: 0 0 auto;
-  padding: 0 0.4rem 0 0.85rem;
+  padding: 0 6px 0 6px;
   height: 2.35rem;
-  background: linear-gradient(
-    180deg,
-    #eaf6fd 0%,
-    #bfe3f8 10%,
-    #7cc3ea 24%,
-    #4a9edb 48%,
-    #2f7fc2 58%,
-    #1f6fb2 100%
-  );
-  border-bottom: 1px solid rgba(10, 40, 70, 0.4);
+  background: linear-gradient(to right, #ffffff66, #0000001a, #ffffff33), #4580c4;
+  box-shadow: inset 0 0 0 1px #fff9;
 }
 
 .configuration-modal__title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 1px 1px rgba(0, 30, 60, 0.5);
+  font: 9pt 'Segoe UI', 'SegoeUI', 'Noto Sans', sans-serif;
+  color: #000000;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff,
+    0 0 10px #fff;
 }
 
-/* Styled like the reference's minimize/maximize buttons (silver glass),
-   not its red close button — this is the only window-chrome button here. */
+/* A single button in 7.css's title-bar-controls tray, using the
+   minimize/maximize blue-glow gradient (--w7-wct-bg-h / --w7-wct-bg)
+   rather than the close button's red one, per correction. */
+.configuration-modal__controls {
+  display: flex;
+  background: #fff3;
+  border: 1px solid #0000004d;
+  border-radius: 0 0 5px 5px;
+  border-top: 0;
+  box-shadow: 0 1px 0 #fffa, 1px 0 0 #fffa, -1px 0 0 #fffa;
+}
+
 .configuration-modal__close {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #fefefe 0%, #e3eaf0 45%, #c7d1da 55%, #aab6c2 100%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(0, 20, 40, 0.4);
-  color: #263640;
-  font-size: 1rem;
+  width: 29px;
+  height: 19px;
+  padding: 0;
+  border: 0;
+  border-radius: 0 0 4px 4px;
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #2aceda, transparent 65%),
+    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+  box-shadow: inset 0 0 0 1px #fffa;
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
+  font-size: 0.85rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .configuration-modal__close:hover {
-  background: linear-gradient(180deg, #ffffff 0%, #edf2f6 45%, #d3dbe2 55%, #b9c4cf 100%);
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #0bfdfa, transparent 65%),
+    linear-gradient(#86a7bc 50%, #092747 0);
 }
 
 .configuration-modal__body {
