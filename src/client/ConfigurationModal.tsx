@@ -81,89 +81,91 @@ export function ConfigurationModal({
   return (
     <div className="configuration-modal__backdrop" onClick={onClose}>
       <div className="configuration-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="configuration-modal__header">
-          <h2 className="configuration-modal__title">Background</h2>
+        <div className="configuration-modal__titlebar">
+          <span className="configuration-modal__title">Background</span>
           <button className="configuration-modal__close" onClick={onClose} aria-label="Close configuration">
             ×
           </button>
         </div>
 
-        <div className="configuration-modal__tabs">
-          <button
-            className={
-              mode === 'color'
-                ? 'configuration-modal__tab configuration-modal__tab--active'
-                : 'configuration-modal__tab'
-            }
-            onClick={() => setMode('color')}
-          >
-            Color
-          </button>
-          <button
-            className={
-              mode === 'image'
-                ? 'configuration-modal__tab configuration-modal__tab--active'
-                : 'configuration-modal__tab'
-            }
-            onClick={() => setMode('image')}
-          >
-            Image
-          </button>
-        </div>
-
-        {error && <p className="configuration-modal__error">{error}</p>}
-
-        {mode === 'color' ? (
-          <div className="configuration-modal__swatches">
-            {ALLOWED_BACKGROUND_COLORS.map((color) => (
-              <button
-                key={color}
-                className={
-                  backgroundConfig?.type === 'color' && backgroundConfig.value === color
-                    ? 'configuration-modal__swatch configuration-modal__swatch--selected'
-                    : 'configuration-modal__swatch'
-                }
-                style={{ backgroundColor: color }}
-                onClick={() => selectColor(color)}
-                aria-label={`Set background color ${color}`}
-              />
-            ))}
+        <div className="configuration-modal__body">
+          <div className="configuration-modal__tabs">
+            <button
+              className={
+                mode === 'color'
+                  ? 'configuration-modal__tab configuration-modal__tab--active'
+                  : 'configuration-modal__tab'
+              }
+              onClick={() => setMode('color')}
+            >
+              Color
+            </button>
+            <button
+              className={
+                mode === 'image'
+                  ? 'configuration-modal__tab configuration-modal__tab--active'
+                  : 'configuration-modal__tab'
+              }
+              onClick={() => setMode('image')}
+            >
+              Image
+            </button>
           </div>
-        ) : (
-          <div className="configuration-modal__images">
-            {images === null ? (
-              <p className="configuration-modal__status">Loading images...</p>
-            ) : (
-              images.map((filename) => (
+
+          {error && <p className="configuration-modal__error">{error}</p>}
+
+          {mode === 'color' ? (
+            <div className="configuration-modal__swatches">
+              {ALLOWED_BACKGROUND_COLORS.map((color) => (
                 <button
-                  key={filename}
+                  key={color}
                   className={
-                    backgroundConfig?.type === 'image' && backgroundConfig.value === filename
-                      ? 'configuration-modal__thumb configuration-modal__thumb--selected'
-                      : 'configuration-modal__thumb'
+                    backgroundConfig?.type === 'color' && backgroundConfig.value === color
+                      ? 'configuration-modal__swatch configuration-modal__swatch--selected'
+                      : 'configuration-modal__swatch'
                   }
-                  onClick={() => selectImage(filename)}
-                  aria-label={`Set background image ${filename}`}
-                >
-                  <img src={`/backgrounds/${filename}`} alt="" />
-                </button>
-              ))
-            )}
-            <label className="configuration-modal__upload">
-              Upload new image
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  e.target.value = ''
-                  handleUpload(file)
-                }}
-                aria-label="Upload new image"
-              />
-            </label>
-          </div>
-        )}
+                  style={{ backgroundColor: color }}
+                  onClick={() => selectColor(color)}
+                  aria-label={`Set background color ${color}`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="configuration-modal__images">
+              {images === null ? (
+                <p className="configuration-modal__status">Loading images...</p>
+              ) : (
+                images.map((filename) => (
+                  <button
+                    key={filename}
+                    className={
+                      backgroundConfig?.type === 'image' && backgroundConfig.value === filename
+                        ? 'configuration-modal__thumb configuration-modal__thumb--selected'
+                        : 'configuration-modal__thumb'
+                    }
+                    onClick={() => selectImage(filename)}
+                    aria-label={`Set background image ${filename}`}
+                  >
+                    <img src={`/backgrounds/${filename}`} alt="" />
+                  </button>
+                ))
+              )}
+              <label className="configuration-modal__upload">
+                Upload new image
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    e.target.value = ''
+                    handleUpload(file)
+                  }}
+                  aria-label="Upload new image"
+                />
+              </label>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
