@@ -83,12 +83,10 @@ export function PlayerChrome({
       />
       <div className="player-chrome__row">
         <div className="player-chrome__readout">
-          <div className="player-chrome__title-row">
-            <span className="player-chrome__title">{trackName}</span>
-            <span className="player-chrome__time">{formatTime(draggedMs ?? liveProgressMs)}</span>
-          </div>
+          <span className="player-chrome__title">{trackName}</span>
         </div>
         <div className="player-chrome__transport">
+          <span className="player-chrome__time">{formatTime(seekProgressMs)}</span>
           <div className="player-chrome__controls">
             <button
               className="player-chrome__icon-btn player-chrome__icon-btn--prev"
