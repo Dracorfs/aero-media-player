@@ -7,7 +7,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: 'Aero Media Player' },
     ],
-    links: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+    links: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
   }),
   component: RootComponent,
 })
