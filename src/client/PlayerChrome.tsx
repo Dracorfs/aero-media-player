@@ -35,6 +35,7 @@ export function PlayerChrome({
   // thumb freeze or jump backwards mid-drag). The seek is issued once, on
   // release, instead of on every drag step.
   const [draggedMs, setDraggedMs] = useState<number | null>(null)
+  const [volume, setVolume] = useState(0.5)
   const liveProgressMs = useLiveProgress(progressMs, isPlaying, durationMs)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
@@ -83,36 +84,55 @@ export function PlayerChrome({
             <span className="player-chrome__time">{formatTime(draggedMs ?? liveProgressMs)}</span>
           </div>
         </div>
-        <div className="player-chrome__controls">
-          <button
-            className="player-chrome__icon-btn player-chrome__icon-btn--prev"
-            onClick={onSkipPrevious}
-            aria-label="Previous track"
-          >
-            ⏮
-          </button>
-          <button className="player-chrome__play-btn" onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
-            {isPlaying ? '⏸' : '▶'}
-          </button>
-          <button
-            className="player-chrome__icon-btn player-chrome__icon-btn--next"
-            onClick={onSkipNext}
-            aria-label="Next track"
-          >
-            ⏭
-          </button>
+        <div className="player-chrome__transport">
+          <div className="player-chrome__controls">
+            <button
+              className="player-chrome__icon-btn player-chrome__icon-btn--prev"
+              onClick={onSkipPrevious}
+              aria-label="Previous track"
+            >
+              ⏮
+            </button>
+            <button className="player-chrome__play-btn" onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
+              {isPlaying ? '⏸' : '▶'}
+            </button>
+            <button
+              className="player-chrome__icon-btn player-chrome__icon-btn--next"
+              onClick={onSkipNext}
+              aria-label="Next track"
+            >
+              ⏭
+            </button>
+          </div>
+          <div className="player-chrome__volume-group">
+            <svg
+              className="player-chrome__volume-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M4 9v6h4l5 5V4L8 9H4z" />
+              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.74 2.5-2.26 2.5-4.03z" />
+              <path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
+            </svg>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              onChange={(e) => {
+                const next = Number(e.target.value)
+                setVolume(next)
+                onVolumeChange(next)
+              }}
+              aria-label="Volume"
+              className="player-chrome__volume"
+              style={{ '--volume-fill': `${volume * 100}%` } as React.CSSProperties}
+            />
+          </div>
         </div>
         <div className="player-chrome__extras">
-          <span className="player-chrome__volume-icon">🔊</span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            defaultValue={0.5}
-            onChange={(e) => onVolumeChange(Number(e.target.value))}
-            className="player-chrome__volume"
-          />
           <button
             className="player-chrome__icon-btn"
             onClick={toggleFullscreen}
