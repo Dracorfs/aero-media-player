@@ -174,8 +174,8 @@
 }
 
 .player-chrome__volume-icon {
-  width: 0.95rem;
-  height: 0.95rem;
+  width: 1.2rem;
+  height: 1.2rem;
   flex-shrink: 0;
   fill: #0a2a35;
   opacity: 0.7;
