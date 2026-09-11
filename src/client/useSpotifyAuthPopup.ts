@@ -69,6 +69,21 @@ export function useSpotifyAuthPopup(onComplete: () => void): SpotifyAuthPopup {
     return () => window.removeEventListener('message', handleMessage)
   }, [settle])
 
+  useEffect(() => {
+    function handleFocus() {
+      if (!inFlightRef.current) return
+      // Coming back to this tab is a good moment to just ask the server again.
+      // It costs one request and it un-sticks a sign-in whose handoff never
+      // arrived — a browser that refused the popup's self-close, an extension
+      // that swallowed the message, a severed `window.opener`. The sign-in
+      // stays in flight, so a later message or close still settles it.
+      onCompleteRef.current()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
+
   useEffect(() => stopPolling, [stopPolling])
 
   const startSignIn = useCallback(() => {

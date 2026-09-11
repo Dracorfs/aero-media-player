@@ -79,3 +79,45 @@ describe('useMediaShortcuts', () => {
     expect(onTogglePlay).not.toHaveBeenCalled()
   })
 })
+
+describe('useMediaShortcuts library toggle', () => {
+  it('toggles the library on "l", case-insensitively', () => {
+    const onToggleLibrary = vi.fn()
+    renderHook(() => useMediaShortcuts(vi.fn(), vi.fn(), onToggleLibrary))
+
+    pressKey({ key: 'l' })
+    pressKey({ key: 'L' })
+
+    expect(onToggleLibrary).toHaveBeenCalledTimes(2)
+  })
+
+  it('leaves the browser\'s own Cmd/Ctrl+L alone', () => {
+    const onToggleLibrary = vi.fn()
+    renderHook(() => useMediaShortcuts(vi.fn(), vi.fn(), onToggleLibrary))
+
+    pressKey({ key: 'l', metaKey: true })
+    pressKey({ key: 'l', ctrlKey: true })
+
+    expect(onToggleLibrary).not.toHaveBeenCalled()
+  })
+
+  it('ignores "l" typed into a form field', () => {
+    const onToggleLibrary = vi.fn()
+    renderHook(() => useMediaShortcuts(vi.fn(), vi.fn(), onToggleLibrary))
+
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    pressKey({ key: 'l' }, input)
+    input.remove()
+
+    expect(onToggleLibrary).not.toHaveBeenCalled()
+  })
+
+  it('is optional — "l" does nothing when no handler is given', () => {
+    const onTogglePlay = vi.fn()
+    renderHook(() => useMediaShortcuts(onTogglePlay, vi.fn()))
+
+    expect(() => pressKey({ key: 'l' })).not.toThrow()
+    expect(onTogglePlay).not.toHaveBeenCalled()
+  })
+})

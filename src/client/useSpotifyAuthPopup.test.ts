@@ -128,6 +128,47 @@ describe('useSpotifyAuthPopup', () => {
     expect(onComplete).not.toHaveBeenCalled()
   })
 
+  it('re-checks status when the user comes back to the tab mid-sign-in', () => {
+    vi.stubGlobal('open', vi.fn().mockReturnValue(fakePopup()))
+    const onComplete = vi.fn()
+
+    const { result } = renderHook(() => useSpotifyAuthPopup(onComplete))
+    act(() => result.current.startSignIn())
+    act(() => {
+      window.dispatchEvent(new Event('focus'))
+    })
+
+    expect(onComplete).toHaveBeenCalledTimes(1)
+    // Still in flight: a handoff that shows up later must still settle it.
+    expect(result.current.isPending).toBe(true)
+  })
+
+  it('ignores focus when no sign-in is in flight', () => {
+    const onComplete = vi.fn()
+
+    renderHook(() => useSpotifyAuthPopup(onComplete))
+    act(() => {
+      window.dispatchEvent(new Event('focus'))
+    })
+
+    expect(onComplete).not.toHaveBeenCalled()
+  })
+
+  it('still settles from the message after a focus re-check', () => {
+    vi.stubGlobal('open', vi.fn().mockReturnValue(fakePopup()))
+    const onComplete = vi.fn()
+
+    const { result } = renderHook(() => useSpotifyAuthPopup(onComplete))
+    act(() => result.current.startSignIn())
+    act(() => {
+      window.dispatchEvent(new Event('focus'))
+    })
+    act(() => postComplete())
+
+    expect(onComplete).toHaveBeenCalledTimes(2)
+    expect(result.current.isPending).toBe(false)
+  })
+
   it('reports a blocked popup instead of hanging', () => {
     vi.stubGlobal('open', vi.fn().mockReturnValue(null))
     const onComplete = vi.fn()

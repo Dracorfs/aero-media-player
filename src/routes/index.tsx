@@ -42,10 +42,16 @@ export const Route = createFileRoute('/')({
 function Index() {
   const { isSignedIn } = Route.useLoaderData()
   const router = useRouter()
-  const { isOpen: isSidebarOpen, open: openSidebar, close: closeSidebar } = useSidebar()
+  const {
+    isOpen: isSidebarOpen,
+    open: openSidebar,
+    close: closeSidebar,
+    toggle: toggleSidebar,
+  } = useSidebar()
 
   const {
     state,
+    isActiveDevice,
     error,
     togglePlay,
     skipNext,
@@ -53,6 +59,7 @@ function Index() {
     seek,
     setVolume,
     playTrack,
+    playHere,
   } = usePlaybackSDK(() => getPlaybackToken(), { enabled: isSignedIn })
 
   const palette = useAlbumPalette(state?.albumArtUrl)
@@ -140,7 +147,7 @@ function Index() {
       <VisualizerBackdrop config={backgroundConfig} />
       <Visualizer frame={frame} />
       <PlayerChrome
-        trackName={state?.name ?? (isSignedIn ? 'Pick a track from the library' : '')}
+        trackName={state?.name ?? ''}
         isPlaying={state?.isPlaying ?? false}
         progressMs={state?.progressMs ?? 0}
         durationMs={state?.durationMs ?? 0}
@@ -152,6 +159,7 @@ function Index() {
         onOpenSettings={() => setIsSettingsOpen(true)}
         isDisabled={!isSignedIn}
         isShifted={isSidebarOpen}
+        onToggleLibrary={toggleSidebar}
       />
       <Sidebar
         isOpen={isSidebarOpen}
@@ -162,6 +170,8 @@ function Index() {
         onSignIn={startSignIn}
         onSignOut={handleSignOut}
         onSelectTrack={playTrack}
+        canPlayHere={isSignedIn && !isActiveDevice}
+        onPlayHere={playHere}
       />
       <SidebarReveal isSidebarOpen={isSidebarOpen} onOpen={openSidebar} />
       <ConfigurationModal

@@ -8,6 +8,7 @@ import {
   fetchPlaylists,
   fetchPlaylistTracks,
   postPlayInContext,
+  putTransferPlayback,
 } from './spotify-api'
 import { isNotAuthenticatedError } from '../shared/authError'
 import { MissingEnvVarError } from './env'
@@ -325,5 +326,26 @@ describe('isNotAuthenticatedError', () => {
   it('is false for non-error values', () => {
     expect(isNotAuthenticatedError(undefined)).toBe(false)
     expect(isNotAuthenticatedError('Not authenticated')).toBe(false)
+  })
+})
+
+describe('putTransferPlayback', () => {
+  it('PUTs the device id to the player endpoint and asks it to start playing', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await putTransferPlayback('device-1', 'token')
+
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.spotify.com/v1/me/player')
+    expect(options.method).toBe('PUT')
+    expect(options.headers.Authorization).toBe('Bearer token')
+    expect(JSON.parse(options.body)).toEqual({ device_ids: ['device-1'], play: true })
+  })
+
+  it('throws when Spotify responds with a non-ok status', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }))
+
+    await expect(putTransferPlayback('device-1', 'token')).rejects.toThrow('404')
   })
 })

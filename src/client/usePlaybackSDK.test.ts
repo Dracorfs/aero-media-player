@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { usePlaybackSDK } from './usePlaybackSDK'
-import { playTrackInContext } from '../server/spotify-api'
+import { playTrackInContext, transferPlayback } from '../server/spotify-api'
 
 vi.mock('../server/spotify-api', () => ({
   playTrackInContext: vi.fn().mockResolvedValue(undefined),
+  transferPlayback: vi.fn().mockResolvedValue(undefined),
 }))
 
 class FakePlayer {
@@ -273,5 +274,54 @@ describe('usePlaybackSDK', () => {
     })
 
     expect(playTrackInContext).not.toHaveBeenCalled()
+  })
+})
+
+describe('usePlaybackSDK playHere', () => {
+  let fakePlayer: FakePlayer
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    fakePlayer = new FakePlayer()
+    // @ts-expect-error test stub, not the real SDK types
+    window.Spotify = { Player: vi.fn(function () { return fakePlayer }) }
+  })
+
+  it('transfers playback to this tab once the device is ready', async () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    act(() => {
+      fakePlayer.emit('ready', { device_id: 'device-1' })
+    })
+    await act(async () => {
+      await result.current.playHere()
+    })
+
+    expect(transferPlayback).toHaveBeenCalledWith({ data: { deviceId: 'device-1' } })
+  })
+
+  it('rejects with a reason when the device is not ready yet', async () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    await expect(result.current.playHere()).rejects.toThrow(/not ready/i)
+    expect(transferPlayback).not.toHaveBeenCalled()
+  })
+
+  it('rejects while disabled rather than silently doing nothing', async () => {
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token', { enabled: false }))
+
+    await expect(result.current.playHere()).rejects.toThrow(/not ready/i)
+    expect(transferPlayback).not.toHaveBeenCalled()
+  })
+
+  it('surfaces a failed transfer to the caller', async () => {
+    vi.mocked(transferPlayback).mockRejectedValueOnce(new Error('Spotify transfer request failed: 404'))
+    const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    act(() => {
+      fakePlayer.emit('ready', { device_id: 'device-1' })
+    })
+
+    await expect(result.current.playHere()).rejects.toThrow('404')
   })
 })

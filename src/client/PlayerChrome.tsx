@@ -33,6 +33,11 @@ interface PlayerChromeProps {
    * over to stay centered in the space that is actually free.
    */
   isShifted?: boolean
+  /**
+   * Toggles the library sidebar from the "l" shortcut. Stays live even while
+   * disabled — the sidebar is where signing in happens.
+   */
+  onToggleLibrary?: () => void
 }
 
 export function PlayerChrome({
@@ -48,6 +53,7 @@ export function PlayerChrome({
   onOpenSettings,
   isDisabled = false,
   isShifted = false,
+  onToggleLibrary,
 }: PlayerChromeProps) {
   // While the user drags, the slider is driven by local state so it doesn't
   // fight the coarse, event-driven `progressMs` prop (which would make the
@@ -58,7 +64,7 @@ export function PlayerChrome({
   const liveProgressMs = useLiveProgress(progressMs, isPlaying, durationMs)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
-  useMediaShortcuts(isDisabled ? noop : onTogglePlay, toggleFullscreen)
+  useMediaShortcuts(isDisabled ? noop : onTogglePlay, toggleFullscreen, onToggleLibrary)
 
   const seekProgressMs = isDisabled ? 0 : (draggedMs ?? liveProgressMs)
   const seekFillPct = durationMs > 0 ? (seekProgressMs / durationMs) * 100 : 0

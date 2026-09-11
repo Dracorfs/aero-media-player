@@ -158,28 +158,78 @@ files touched, new behaviour covered by a test next to the file it tests.
 
 ## Phase 4: Polish
 
-### [ ] Task 9: "Play here" — transfer playback to this device (optional) — S
+### [x] Task 9: "Play here" — transfer playback to this device (optional) — S
 `src/server/spotify-api.ts` (+test), `src/client/usePlaybackSDK.ts`, `src/client/Sidebar.tsx` — depends on Task 8
 
-- [ ] `transferPlayback({ deviceId })` calls `PUT /me/player` with `device_ids`, throws
-      descriptively on a non-OK response
-- [ ] `playHere()` on the SDK hook uses the current device id, no-ops when not ready
-- [ ] Sidebar shows "Play here" only while signed in and not the active device
-- [ ] Failures are logged and surfaced in the sidebar, never thrown into the render tree
-- [ ] Verify: `npx vitest run src/server/spotify-api.test.ts src/client/usePlaybackSDK.test.ts`;
-      manually move playback from the desktop app to the tab
+- [x] `transferPlayback({ deviceId })` calls `PUT /me/player` with `device_ids` (and
+      `play: true`), throws descriptively on a non-OK response
+- [x] `playHere()` on the SDK hook uses the current device id, and *rejects with a reason*
+      when the device isn't ready — changed from the planned silent no-op, since a button
+      that does nothing when clicked tells the user nothing
+- [x] Sidebar shows "Play here" only while signed in and not the active device
+- [x] Failures are caught in the sidebar and rendered as a message, never thrown into the
+      render tree; a stale failure clears once the transfer is no longer offered
+- [x] Verify: `npx vitest run src/server/spotify-api.test.ts src/client/usePlaybackSDK.test.ts`
+- [ ] Manual: move playback from the desktop app to the tab
 
-### [ ] Task 10: Refresh README for the new landing/auth flow — XS
+### [x] Task 10: Refresh README for the new landing/auth flow — XS
 `README.md` — depends on Task 8
 
-- [ ] "Run it" describes the player-with-sidebar landing page and popup sign-in
-- [ ] "No library or playlist browsing" limitation corrected (own playlists only, and why
+- [x] "Run it" describes the player-with-sidebar landing page and popup sign-in
+- [x] "No library or playlist browsing" limitation corrected (own playlists only, and why
       followed playlists are excluded in Dev Mode)
-- [ ] Sign-off and mouse-move sidebar reopen each documented in a sentence
-- [ ] Popup-blocker caveat noted
-- [ ] Verify: read through against the running app; no stale "redirects to Spotify on first load" claim
+- [x] Sign-off and mouse-move sidebar reopen each documented in a sentence
+- [x] Popup-blocker caveat noted
+- [x] Intro rewritten: the page is the player, not a login that leads to one
+- [ ] Verify: read through against the running app (the stale "redirected to Spotify on
+      first run" claim is gone)
+
+## Phase 5: Post-review fixes (from the first real sign-in run)
+
+### [x] Task 11: Pin the app to the OAuth origin — S
+`src/server/origin.ts` (+test), `src/routes/__root.tsx`
+
+The reported failure: opened on `localhost:3000`, the popup came back on
+`127.0.0.1:3000` (Spotify's fixed redirect URI), so the two tabs had separate
+cookie jars and couldn't postMessage. The popup became a second signed-in copy
+of the app while the original tab waited forever.
+
+- [x] `canonicalOrigin()` derives the one usable origin from `SPOTIFY_REDIRECT_URI`
+- [x] `canonicalRedirectFor()` is pure and unit-tested (same origin → null; other host,
+      port or scheme → canonical origin with path and query preserved)
+- [x] Root `beforeLoad` redirects document requests on any other host, server-side only
+      (client navigations can't change origin, and checking would cost a round trip each)
+- [x] Verified against a running dev server: `localhost:3000/` → 307 →
+      `http://127.0.0.1:3000/`; `/login?mode=popup` keeps its query; canonical origin → 200
+
+### [x] Task 12: Recover a lost sign-in handoff — XS
+`src/client/useSpotifyAuthPopup.ts` (+test)
+
+- [x] Re-checks auth status when the opener regains focus while a sign-in is in flight,
+      without settling it — so a swallowed message or a refused self-close can't leave the
+      tab waiting forever
+- [x] A later message or popup close still settles the same sign-in exactly once
+
+### [x] Task 13: Fix SSR of the signed-out player — XS
+`src/client/useFullscreen.ts`, `src/client/PlayerChrome.test.tsx`
+
+- [x] `useFullscreen` no longer reads `document` in a `useState` initializer — it was
+      latent until the landing page started server-rendering for signed-out visitors,
+      and threw `document is not defined` on every SSR of `/`
+- [x] Reads `Boolean(document.fullscreenElement)` on mount instead, which also fixes
+      browsers (and jsdom) reporting `undefined` as "fullscreen"
+- [x] Verified: the dev server renders `/` with no SSR errors, and the HTML contains the
+      open sidebar and the disabled chrome
+
+### [x] Task 14: Library shortcut — XS
+`src/client/useMediaShortcuts.ts` (+test), `src/client/PlayerChrome.tsx`, `src/routes/index.tsx`
+
+- [x] `l` toggles the sidebar, alongside Space and `f`; ignored with modifiers held
+      (so Cmd/Ctrl+L still belongs to the browser) and while typing in a field
+- [x] Stays live while the chrome is disabled — the sidebar is where signing in happens
+- [x] The third callback is optional, so existing callers are unaffected
 
 ### [ ] Checkpoint D: Complete
-- [ ] `npm test`, `npm run typecheck`, `npm run build` all clean
+- [x] `npm test` (240 passing), `npm run typecheck`, `npm run build` all clean
 - [ ] Every box above checked
 - [ ] Open questions in `tasks/plan.md` answered or consciously deferred

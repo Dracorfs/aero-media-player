@@ -469,13 +469,21 @@ playlist browsing" under Known limitations. Both are now wrong.
 | SDK teardown on sign-off leaves a stale Connect device | Low | `enabled: false` runs the existing effect cleanup (`disconnect()`); confirm the device disappears from another Spotify client's device list |
 | Idle visualizer burns GPU on an unattended signed-out tab | Low | Idle frame ticks at 250 ms like live playback; accept for local dev, and note `document.hidden` throttling as a follow-up if it bites |
 
-## Open Questions
+## Open Questions — answered
 
-- **Keyboard shortcut for the sidebar.** You chose mouse-move reveal, so none is planned. Worth
-  adding a key (e.g. `l`) alongside Space/`f` in `useMediaShortcuts`, or leave the mouse as the
-  only path?
-- **Background settings while signed out.** The plan disables the settings button when signed
-  out, since the background choice is stored per account in the session. Alternative: let a
-  signed-out visitor change the background and have it follow them into the session.
-- **Idle state wording.** The inert chrome shows "Sign in with Spotify to start playing" —
-  substituting a fake track name would look more alive but risks reading as broken.
+- **Keyboard shortcut for the sidebar.** Added, on `l` for "library" (Task 14). `s` was the
+  other candidate but reads as shuffle / search / save in music apps, any of which this
+  player could plausibly grow; `l` matches the panel's own label and the README's wording,
+  and a single letter matches the existing Space and `f` shortcuts.
+- **Background settings while signed out.** No: the settings button stays disabled until
+  there is a session, since the background is stored per account.
+- **Idle state wording.** No fake track name. The inert chrome reads "Sign in with Spotify
+  to start playing".
+
+## Known constraint: the app has exactly one origin
+
+Spotify requires `redirect_uri` to match the dashboard entry character for character, so the
+app only works on the origin `SPOTIFY_REDIRECT_URI` names (`http://127.0.0.1:3000`). Opening
+it on `http://localhost:3000` used to half-work and then fail confusingly at sign-in: two
+cookie jars, and a popup that could not talk to its opener. The root route now redirects any
+other host to the canonical origin (Task 11), so this is enforced rather than documented.

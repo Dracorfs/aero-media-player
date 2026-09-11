@@ -236,3 +236,29 @@ export async function postPlayInContext(request: PlayInContextRequest, accessTok
 export const playTrackInContext = createServerFn({ method: 'POST' })
   .validator((data: PlayInContextRequest) => data)
   .handler(async ({ data }) => postPlayInContext(data, await getValidAccessToken()))
+
+/**
+ * Moves whatever the account is already playing onto this tab's Connect
+ * device. Picking a track starts playback here directly; this is the other
+ * way in, for audio that is already running on a phone or the desktop app.
+ */
+export async function putTransferPlayback(deviceId: string, accessToken: string): Promise<void> {
+  const response = await fetch('https://api.spotify.com/v1/me/player', {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    // `play: true` because the button says "Play here": a transfer that
+    // lands paused would look like it did nothing.
+    body: JSON.stringify({ device_ids: [deviceId], play: true }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Spotify transfer request failed: ${response.status}`)
+  }
+}
+
+export const transferPlayback = createServerFn({ method: 'POST' })
+  .validator((data: { deviceId: string }) => data)
+  .handler(async ({ data }) => putTransferPlayback(data.deviceId, await getValidAccessToken()))

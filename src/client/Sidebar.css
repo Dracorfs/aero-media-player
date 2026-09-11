@@ -109,6 +109,22 @@
   color: #1a6ca1;
 }
 
+/* Sits above the picker: it's the shortcut for audio that is already
+   playing somewhere else, not part of choosing something new. */
+.sidebar__transfer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+}
+
+.sidebar__error {
+  margin: 0;
+  color: #a02040;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .sidebar__footer {
   flex: 0 0 auto;
 }

@@ -1,10 +1,11 @@
 # Aero Media Player
 
-A Frutiger Aero visualizer for your own Spotify playback. Log in with Spotify,
-the browser tab becomes a Spotify Connect device via the Web Playback SDK, and a
-full-screen Three.js scene (glossy chrome bars + glass wave) animates from the
-track's playback position, a best-effort tempo, and colors extracted from the
-album art.
+A Frutiger Aero visualizer for your own Spotify playback. The page is the
+player: a full-screen Three.js scene (glossy chrome bars + glass wave) with a
+library sidebar and a transport bar over it. Sign in from the sidebar and the
+browser tab becomes a Spotify Connect device via the Web Playback SDK, with the
+scene animating from the track's playback position, a best-effort tempo, and
+colors extracted from the album art.
 
 Built with TanStack Start (Vite), React 19, TypeScript, and Three.js. Local dev
 only — there is no deployment configuration.
@@ -89,10 +90,31 @@ Open **http://127.0.0.1:3000** (again: `127.0.0.1`, not `localhost` — the OAut
 redirect URI is host-specific and the session cookie is scoped to the host you
 started on).
 
-First run: you'll be redirected to Spotify to authorize, then back to the app.
-The app registers a Connect device named **Aero Media Player**. Pick it from any
-Spotify client's device menu, or press **Play here** to transfer playback to this
-tab.
+The landing page *is* the player. The visualizer starts on an idle scene right
+away, with the library sidebar open on the left and the transport bar visible
+but inert until there's a session.
+
+- **Sign in with Spotify**, in the sidebar, opens Spotify's consent screen in a
+  second tab. Approve it and that tab closes itself — the player picks the
+  session up without a reload. If your browser blocks the popup, the sidebar
+  offers a link that signs you in in this tab instead.
+- Signed in, the sidebar lists your playlists: open one and click a track to
+  start playback here. That is also what makes this tab the active Spotify
+  device (it registers as **Aero Media Player**, so you can also pick it from
+  any Spotify client's device menu). If audio is already playing somewhere
+  else, **Play here** moves it over.
+- **Sign off**, at the bottom of the sidebar, clears the session and
+  disconnects the device.
+- Close the sidebar with **×**. To bring it back, move the mouse: a **☰**
+  button fades in on the left, the same reveal cinema mode uses. **L** toggles
+  it from the keyboard, alongside **Space** (play/pause) and **F**
+  (fullscreen).
+
+If you open `http://localhost:3000` out of habit, the app redirects you to
+`http://127.0.0.1:3000`. Browsers treat those as different origins, and Spotify
+can only ever redirect back to the one in `SPOTIFY_REDIRECT_URI` — split across
+the two, the session cookie and the sign-in popup end up on opposite sides of
+the fence.
 
 ## Scripts
 
@@ -116,5 +138,7 @@ tab.
 - **No real audio analysis.** Spotify's stream is DRM-protected and exposes no
   frequency data, so all visual reactivity is derived from playback position,
   tempo, and album-art color.
-- **Now Playing only.** No library or playlist browsing, no visualizer preset
-  switcher.
+- **Your own playlists only.** The sidebar lists playlists you own. Spotify's
+  API policy blocks reading the items of a playlist you merely follow while the
+  app is in Development Mode, so offering those would only ever 403. There is
+  no search, no album/artist browsing, and no visualizer preset switcher.

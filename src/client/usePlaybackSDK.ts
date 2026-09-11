@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toPlaybackState, type PlaybackState } from './playbackState'
-import { playTrackInContext } from '../server/spotify-api'
+import { playTrackInContext, transferPlayback } from '../server/spotify-api'
 import { isNotAuthenticatedError } from '../shared/authError'
 
 export type PlaybackSDKError = 'account_error' | 'initialization_error' | 'authentication_error'
@@ -25,6 +25,12 @@ interface PlaybackSDK {
   seek: (positionMs: number) => void
   setVolume: (volume: number) => void
   playTrack: (contextUri: string, trackUri: string) => void
+  /**
+   * Moves playback that is running on another Spotify device onto this tab.
+   * Rejects (rather than failing silently) so the caller can say why nothing
+   * happened.
+   */
+  playHere: () => Promise<void>
 }
 
 declare global {
@@ -145,6 +151,12 @@ export function usePlaybackSDK(
     skipPrevious: () => playerRef.current?.previousTrack(),
     seek: (positionMs) => playerRef.current?.seek(positionMs),
     setVolume: (volume) => playerRef.current?.setVolume(volume),
+    playHere: async () => {
+      if (!deviceIdRef.current) {
+        throw new Error('This tab is not ready as a Spotify device yet')
+      }
+      await transferPlayback({ data: { deviceId: deviceIdRef.current } })
+    },
     playTrack: (contextUri, trackUri) => {
       if (deviceIdRef.current) {
         playTrackInContext({

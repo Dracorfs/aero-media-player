@@ -28,6 +28,8 @@ function renderSidebar(overrides: Partial<Parameters<typeof Sidebar>[0]> = {}) {
     onSignIn: vi.fn(),
     onSignOut: vi.fn(),
     onSelectTrack: vi.fn(),
+    canPlayHere: false,
+    onPlayHere: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
   return { ...render(<Sidebar {...props} />), props }
@@ -189,5 +191,54 @@ describe('SidebarReveal', () => {
     })
 
     expect(screen.queryByRole('button', { name: /show library/i })).toBeNull()
+  })
+})
+
+describe('Sidebar "Play here"', () => {
+  it('offers the transfer when playback is running on another device', () => {
+    renderSidebar({ isSignedIn: true, canPlayHere: true })
+
+    expect(screen.getByRole('button', { name: /play here/i })).toBeInTheDocument()
+  })
+
+  it('stays out of the way when this tab is already the active device', () => {
+    renderSidebar({ isSignedIn: true, canPlayHere: false })
+
+    expect(screen.queryByRole('button', { name: /play here/i })).toBeNull()
+  })
+
+  it('is not offered while signed out', () => {
+    renderSidebar({ isSignedIn: false, canPlayHere: false })
+
+    expect(screen.queryByRole('button', { name: /play here/i })).toBeNull()
+  })
+
+  it('moves playback here when clicked', () => {
+    const { props } = renderSidebar({ isSignedIn: true, canPlayHere: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /play here/i }))
+
+    expect(props.onPlayHere).toHaveBeenCalledTimes(1)
+  })
+
+  it('explains a failed transfer instead of throwing', async () => {
+    const onPlayHere = vi.fn().mockRejectedValue(new Error('Spotify transfer request failed: 404'))
+    renderSidebar({ isSignedIn: true, canPlayHere: true, onPlayHere })
+
+    fireEvent.click(screen.getByRole('button', { name: /play here/i }))
+
+    expect(await screen.findByText(/couldn't move playback here/i)).toBeInTheDocument()
+  })
+
+  it('drops a stale failure once the transfer is no longer offered', async () => {
+    const onPlayHere = vi.fn().mockRejectedValue(new Error('nope'))
+    const { rerender, props } = renderSidebar({ isSignedIn: true, canPlayHere: true, onPlayHere })
+
+    fireEvent.click(screen.getByRole('button', { name: /play here/i }))
+    await screen.findByText(/couldn't move playback here/i)
+
+    rerender(<Sidebar {...props} canPlayHere={false} />)
+
+    expect(screen.queryByText(/couldn't move playback here/i)).toBeNull()
   })
 })

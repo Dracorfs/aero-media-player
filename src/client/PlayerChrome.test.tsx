@@ -151,10 +151,7 @@ describe('PlayerChrome when disabled', () => {
   it('keeps fullscreen and cinema mode usable', () => {
     const { getByLabelText } = renderChrome({ isDisabled: true, isPlaying: false })
 
-    // Matched loosely: jsdom reports `document.fullscreenElement` as
-    // undefined, so `useFullscreen` starts out believing it is fullscreen and
-    // the label is "Exit fullscreen" here rather than "Enter fullscreen".
-    expect(getByLabelText(/fullscreen/i)).not.toBeDisabled()
+    expect(getByLabelText('Enter fullscreen')).not.toBeDisabled()
     expect(getByLabelText('Hide player')).not.toBeDisabled()
   })
 
@@ -190,6 +187,15 @@ describe('PlayerChrome when disabled', () => {
     fireEvent.keyDown(window, { code: 'Space' })
 
     expect(onTogglePlay).not.toHaveBeenCalled()
+  })
+
+  it('still opens the library on "l" — that is where signing in happens', () => {
+    const onToggleLibrary = vi.fn()
+    renderChrome({ isDisabled: true, isPlaying: false, onToggleLibrary })
+
+    fireEvent.keyDown(window, { key: 'l' })
+
+    expect(onToggleLibrary).toHaveBeenCalledTimes(1)
   })
 
   it('still toggles play from the space shortcut when enabled', () => {

@@ -6,12 +6,20 @@ interface Fullscreen {
 }
 
 export function useFullscreen(): Fullscreen {
-  const [isFullscreen, setIsFullscreen] = useState(() => document.fullscreenElement !== null)
+  // Starts false and is corrected on mount rather than read during render:
+  // the player is server-rendered now (the landing page is the player, signed
+  // in or not) and `document` doesn't exist there — nor could the server know
+  // the answer. `Boolean(...)` rather than `!== null` because a browser
+  // without the Fullscreen API reports `undefined`, which means "not
+  // fullscreen", not "fullscreen".
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     function handleChange() {
-      setIsFullscreen(document.fullscreenElement !== null)
+      setIsFullscreen(Boolean(document.fullscreenElement))
     }
+
+    handleChange()
     document.addEventListener('fullscreenchange', handleChange)
     return () => document.removeEventListener('fullscreenchange', handleChange)
   }, [])
