@@ -66,11 +66,13 @@ export function Sidebar({
       aria-hidden={!isOpen}
       aria-label="Library"
     >
-      <header className="sidebar__header">
+      <header className="sidebar__titlebar">
         <h1 className="sidebar__brand">Aero Media Player</h1>
-        <button type="button" className="sidebar__close" onClick={onClose} aria-label="Close sidebar">
-          ×
-        </button>
+        <div className="sidebar__titlebar-controls">
+          <button type="button" className="sidebar__close" onClick={onClose} aria-label="Close sidebar">
+            ×
+          </button>
+        </div>
       </header>
 
       {isSignedIn ? (
