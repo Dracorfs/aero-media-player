@@ -41,6 +41,9 @@ export function PlayerChrome({
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
   useMediaShortcuts(onTogglePlay, toggleFullscreen)
 
+  const seekProgressMs = draggedMs ?? liveProgressMs
+  const seekFillPct = durationMs > 0 ? (seekProgressMs / durationMs) * 100 : 0
+
   function commitSeek() {
     if (draggedMs === null) return
     onSeek(draggedMs)
@@ -67,7 +70,7 @@ export function PlayerChrome({
         type="range"
         min={0}
         max={durationMs}
-        value={draggedMs ?? liveProgressMs}
+        value={seekProgressMs}
         onChange={(e) => setDraggedMs(Number(e.target.value))}
         onPointerUp={commitSeek}
         onMouseUp={commitSeek}
@@ -76,6 +79,7 @@ export function PlayerChrome({
         onBlur={commitSeek}
         aria-label="Seek"
         className="player-chrome__seek"
+        style={{ '--seek-fill': `${seekFillPct}%` } as React.CSSProperties}
       />
       <div className="player-chrome__row">
         <div className="player-chrome__readout">
