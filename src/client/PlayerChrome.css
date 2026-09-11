@@ -81,6 +81,8 @@
   opacity: 0.75;
 }
 
+/* Same blue-glow chrome as the Configuration modal's close button, applied
+   to every control on the player for a consistent look and hover reaction. */
 .player-chrome__icon-btn {
   display: flex;
   align-items: center;
@@ -88,15 +90,23 @@
   width: 1.9rem;
   height: 1.9rem;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: #0a2a35;
+  border: 0;
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #2aceda, transparent 65%),
+    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+  box-shadow: inset 0 0 0 1px #fffa;
+  color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 0.85rem;
   cursor: pointer;
 }
 
 .player-chrome__icon-btn:hover {
-  background: rgba(255, 255, 255, 0.55);
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #0bfdfa, transparent 65%),
+    linear-gradient(#86a7bc 50%, #092747 0);
 }
 
 /* Prev/next round only their outer corner — the inner edge stays flat and
@@ -104,18 +114,17 @@
    nested between them, matching WMP's transport strip. */
 .player-chrome__icon-btn--prev {
   border-radius: 20px 0 0 20px;
-  border-right: none;
   width: 3rem;
 }
 
 .player-chrome__icon-btn--next {
   border-radius: 0 20px 20px 0;
-  border-left: none;
   width: 3rem;
 }
 
-/* The oversized, glossy circular play button is WMP 11's signature
-   element — every other control is a small flat icon around it. */
+/* The oversized circular play button is WMP 11's signature element —
+   every other control is a small flat icon around it. Same blue-glow
+   chrome as the other buttons, just bigger and round. */
 .player-chrome__play-btn {
   display: flex;
   align-items: center;
@@ -123,10 +132,14 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 50%;
-  background: linear-gradient(180deg, #bfe6fb 0%, #4fa3d8 55%, #1f6fb2 100%);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 8px rgba(0, 60, 80, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  border: 0;
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #2aceda, transparent 65%),
+    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+  box-shadow: 0 2px 8px rgba(0, 60, 80, 0.35), inset 0 0 0 1px #fffa;
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 1.1rem;
   cursor: pointer;
   position: relative;
@@ -135,7 +148,10 @@
 }
 
 .player-chrome__play-btn:hover {
-  background: linear-gradient(180deg, #d3eefd 0%, #5fb0e2 55%, #2a7dc4 100%);
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #0bfdfa, transparent 65%),
+    linear-gradient(#86a7bc 50%, #092747 0);
 }
 
 .player-chrome__volume {
