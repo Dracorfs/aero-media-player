@@ -5,6 +5,16 @@ import { isNotAuthenticatedError } from '../shared/authError'
 
 export type PlaybackSDKError = 'account_error' | 'initialization_error' | 'authentication_error'
 
+export interface PlaybackSDKOptions {
+  /**
+   * Whether to run at all. `false` keeps the SDK completely dormant — no
+   * script injection, no Connect device registered, no token fetches — which
+   * is what the signed-out landing page needs, and what signing off tears
+   * back down to.
+   */
+  enabled?: boolean
+}
+
 interface PlaybackSDK {
   state: PlaybackState | null
   isActiveDevice: boolean
@@ -24,7 +34,10 @@ declare global {
   }
 }
 
-export function usePlaybackSDK(getAccessToken: () => Promise<string>): PlaybackSDK {
+export function usePlaybackSDK(
+  getAccessToken: () => Promise<string>,
+  { enabled = true }: PlaybackSDKOptions = {},
+): PlaybackSDK {
   const playerRef = useRef<Spotify.Player | null>(null)
   const deviceIdRef = useRef<string | null>(null)
   const [state, setState] = useState<PlaybackState | null>(null)
@@ -32,14 +45,22 @@ export function usePlaybackSDK(getAccessToken: () => Promise<string>): PlaybackS
   const [error, setError] = useState<PlaybackSDKError | null>(null)
 
   // Callers routinely pass a fresh arrow function on every render. Hold the
-  // latest getter in a ref so the mount effect below can stay keyed on `[]` and
-  // never tear down / re-create the SDK player (which would re-register a new
-  // Spotify Connect device on every re-render).
+  // latest getter in a ref so the effect below never has to depend on it and
+  // so never tears down / re-creates the SDK player (which would re-register a
+  // new Spotify Connect device on every re-render).
   const getAccessTokenRef = useRef(getAccessToken)
   getAccessTokenRef.current = getAccessToken
 
   useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+
     function initPlayer() {
+      // The SDK script can finish loading after this effect has been torn
+      // down (a quick sign-in/sign-off). Without this guard that late
+      // callback registers a Connect device nothing is left holding.
+      if (cancelled) return
+
       const player = new window.Spotify.Player({
         name: 'Aero Media Player',
         getOAuthToken: (callback) => {
@@ -97,11 +118,23 @@ export function usePlaybackSDK(getAccessToken: () => Promise<string>): PlaybackS
     }
 
     return () => {
+      cancelled = true
       playerRef.current?.disconnect()
+      playerRef.current = null
+      deviceIdRef.current = null
     }
-    // Mount-only on purpose: the token getter is read through a ref so a new
-    // function identity from the caller never re-creates the SDK player.
-  }, [])
+    // Keyed only on `enabled`: the token getter is read through a ref, so a
+    // new function identity from the caller never re-creates the SDK player.
+  }, [enabled])
+
+  useEffect(() => {
+    if (enabled) return
+    // Signing off (or never having signed in) must not leave the chrome
+    // showing the last session's track.
+    setState(null)
+    setIsActiveDevice(false)
+    setError(null)
+  }, [enabled])
 
   return {
     state,

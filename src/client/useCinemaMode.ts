@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-
-const REVEAL_HIDE_DELAY_MS = 2000
+import { useCallback, useState } from 'react'
+import { useRevealOnMouseMove } from './useRevealOnMouseMove'
 
 interface CinemaMode {
   isCinemaMode: boolean
@@ -8,29 +7,14 @@ interface CinemaMode {
   toggleCinemaMode: () => void
 }
 
+/**
+ * Cinema mode hides the whole player behind a reveal-on-movement control, so
+ * the visualizer can be watched uninterrupted. The reveal timing is shared
+ * with the sidebar's reopen control (see `useRevealOnMouseMove`).
+ */
 export function useCinemaMode(): CinemaMode {
   const [isCinemaMode, setIsCinemaMode] = useState(false)
-  const [isRevealVisible, setIsRevealVisible] = useState(false)
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    if (!isCinemaMode) {
-      setIsRevealVisible(false)
-      return
-    }
-
-    function handleMouseMove() {
-      setIsRevealVisible(true)
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
-      hideTimeoutRef.current = setTimeout(() => setIsRevealVisible(false), REVEAL_HIDE_DELAY_MS)
-    }
-
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
-    }
-  }, [isCinemaMode])
+  const isRevealVisible = useRevealOnMouseMove(isCinemaMode)
 
   const toggleCinemaMode = useCallback(() => setIsCinemaMode((prev) => !prev), [])
 

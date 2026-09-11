@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   isExpiringSoon,
+  hasUsableCredentials,
   fetchTrackIsrc,
   fetchTrackDynamics,
   DEFAULT_TRACK_DYNAMICS,
@@ -29,6 +30,35 @@ describe('isExpiringSoon', () => {
   it('is true when already expired', () => {
     const now = 1_000_000
     expect(isExpiringSoon(now - 1000, now)).toBe(true)
+  })
+})
+
+describe('hasUsableCredentials', () => {
+  const complete = { accessToken: 'token', refreshToken: 'refresh', expiresAt: 1_000_000 }
+
+  it('is true for a session holding token, refresh token and expiry', () => {
+    expect(hasUsableCredentials(complete)).toBe(true)
+  })
+
+  it('is false for an empty session', () => {
+    expect(hasUsableCredentials({})).toBe(false)
+  })
+
+  it('is false without a refresh token, since the session cannot be renewed', () => {
+    expect(hasUsableCredentials({ ...complete, refreshToken: undefined })).toBe(false)
+  })
+
+  it('is false without an expiry, since refresh timing is unknowable', () => {
+    expect(hasUsableCredentials({ ...complete, expiresAt: undefined })).toBe(false)
+  })
+
+  it('is false for an empty access token rather than truthy-by-presence', () => {
+    expect(hasUsableCredentials({ ...complete, accessToken: '' })).toBe(false)
+  })
+
+  it('ignores unrelated session fields such as the stored background', () => {
+    expect(hasUsableCredentials({ background: { type: 'color', value: '#000000' } })).toBe(false)
+    expect(hasUsableCredentials({ ...complete, background: { type: 'color', value: '#000000' } })).toBe(true)
   })
 })
 

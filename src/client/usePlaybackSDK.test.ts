@@ -32,6 +32,112 @@ describe('usePlaybackSDK', () => {
     window.Spotify = { Player: vi.fn(function () { return fakePlayer }) }
   })
 
+  function sdkState() {
+    return {
+      paused: false,
+      position: 15000,
+      duration: 200000,
+      track_window: {
+        current_track: {
+          id: 'track-123',
+          name: 'Test Track',
+          artists: [{ name: 'Artist One' }],
+          album: { images: [{ url: 'https://example.com/art.jpg' }] },
+        },
+      },
+    } as unknown as Spotify.PlaybackState
+  }
+
+  describe('when disabled', () => {
+    it('never constructs a player, connects, or asks for a token', () => {
+      const getToken = vi.fn(async () => 'token')
+
+      renderHook(() => usePlaybackSDK(getToken, { enabled: false }))
+
+      expect(window.Spotify.Player).not.toHaveBeenCalled()
+      expect(fakePlayer.connect).not.toHaveBeenCalled()
+      expect(getToken).not.toHaveBeenCalled()
+    })
+
+    it('does not inject the SDK script', () => {
+      // @ts-expect-error exercising the cold-start path where the SDK is absent
+      delete window.Spotify
+
+      renderHook(() => usePlaybackSDK(async () => 'token', { enabled: false }))
+
+      expect(document.querySelector('script[src*="sdk.scdn.co"]')).toBeNull()
+    })
+
+    it('reports inert state and safe controls', () => {
+      const { result } = renderHook(() => usePlaybackSDK(async () => 'token', { enabled: false }))
+
+      expect(result.current.state).toBeNull()
+      expect(result.current.isActiveDevice).toBe(false)
+      expect(result.current.error).toBeNull()
+
+      act(() => {
+        result.current.togglePlay()
+        result.current.skipNext()
+        result.current.skipPrevious()
+        result.current.seek(1000)
+        result.current.setVolume(0.5)
+        result.current.playTrack('spotify:playlist:p1', 'spotify:track:t1')
+      })
+
+      expect(playTrackInContext).not.toHaveBeenCalled()
+    })
+  })
+
+  it('initializes the player when enabled flips true', () => {
+    const { rerender } = renderHook(({ enabled }) => usePlaybackSDK(async () => 'token', { enabled }), {
+      initialProps: { enabled: false },
+    })
+
+    expect(window.Spotify.Player).not.toHaveBeenCalled()
+
+    rerender({ enabled: true })
+
+    expect(window.Spotify.Player).toHaveBeenCalledTimes(1)
+    expect(fakePlayer.connect).toHaveBeenCalledTimes(1)
+  })
+
+  it('disconnects the player when enabled flips false', () => {
+    const { rerender } = renderHook(({ enabled }) => usePlaybackSDK(async () => 'token', { enabled }), {
+      initialProps: { enabled: true },
+    })
+
+    expect(fakePlayer.disconnect).not.toHaveBeenCalled()
+
+    rerender({ enabled: false })
+
+    expect(fakePlayer.disconnect).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears the last session\'s playback state when enabled flips false', () => {
+    const { result, rerender } = renderHook(
+      ({ enabled }) => usePlaybackSDK(async () => 'token', { enabled }),
+      { initialProps: { enabled: true } },
+    )
+
+    act(() => {
+      fakePlayer.emit('player_state_changed', sdkState())
+    })
+    expect(result.current.state?.name).toBe('Test Track')
+    expect(result.current.isActiveDevice).toBe(true)
+
+    rerender({ enabled: false })
+
+    expect(result.current.state).toBeNull()
+    expect(result.current.isActiveDevice).toBe(false)
+  })
+
+  it('runs by default when no options are passed', () => {
+    renderHook(() => usePlaybackSDK(async () => 'token'))
+
+    expect(window.Spotify.Player).toHaveBeenCalledTimes(1)
+    expect(fakePlayer.connect).toHaveBeenCalledTimes(1)
+  })
+
   it('marks the device inactive when player_state_changed receives null', () => {
     const { result } = renderHook(() => usePlaybackSDK(async () => 'token'))
 

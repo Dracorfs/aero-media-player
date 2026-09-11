@@ -5,6 +5,12 @@ import { useLiveProgress } from './useLiveProgress'
 import { useMediaShortcuts } from './useMediaShortcuts'
 import './PlayerChrome.css'
 
+export const SIGNED_OUT_TITLE = 'Sign in with Spotify to start playing'
+
+// Module-level so the identity is stable: `useMediaShortcuts` re-registers its
+// listener whenever its callbacks change.
+const noop = () => {}
+
 interface PlayerChromeProps {
   trackName: string
   isPlaying: boolean
@@ -16,6 +22,17 @@ interface PlayerChromeProps {
   onSeek: (positionMs: number) => void
   onVolumeChange: (volume: number) => void
   onOpenSettings: () => void
+  /**
+   * Renders the bar as scenery: every playback control is inert and the
+   * readout invites sign-in instead of naming a track. Fullscreen and cinema
+   * mode stay live — neither needs an account.
+   */
+  isDisabled?: boolean
+  /**
+   * The sidebar is holding the left edge of the screen, so the bar slides
+   * over to stay centered in the space that is actually free.
+   */
+  isShifted?: boolean
 }
 
 export function PlayerChrome({
@@ -29,6 +46,8 @@ export function PlayerChrome({
   onSeek,
   onVolumeChange,
   onOpenSettings,
+  isDisabled = false,
+  isShifted = false,
 }: PlayerChromeProps) {
   // While the user drags, the slider is driven by local state so it doesn't
   // fight the coarse, event-driven `progressMs` prop (which would make the
@@ -39,9 +58,9 @@ export function PlayerChrome({
   const liveProgressMs = useLiveProgress(progressMs, isPlaying, durationMs)
   const { isFullscreen, toggleFullscreen } = useFullscreen()
   const { isCinemaMode, isRevealVisible, toggleCinemaMode } = useCinemaMode()
-  useMediaShortcuts(onTogglePlay, toggleFullscreen)
+  useMediaShortcuts(isDisabled ? noop : onTogglePlay, toggleFullscreen)
 
-  const seekProgressMs = draggedMs ?? liveProgressMs
+  const seekProgressMs = isDisabled ? 0 : (draggedMs ?? liveProgressMs)
   const seekFillPct = durationMs > 0 ? (seekProgressMs / durationMs) * 100 : 0
 
   function commitSeek() {
@@ -65,7 +84,11 @@ export function PlayerChrome({
   }
 
   return (
-    <div className="player-chrome">
+    <div
+      className={`player-chrome${isDisabled ? ' player-chrome--disabled' : ''}${
+        isShifted ? ' player-chrome--shifted' : ''
+      }`}
+    >
       <input
         type="range"
         min={0}
@@ -78,12 +101,13 @@ export function PlayerChrome({
         onKeyUp={commitSeek}
         onBlur={commitSeek}
         aria-label="Seek"
+        disabled={isDisabled}
         className="player-chrome__seek"
         style={{ '--seek-fill': `${seekFillPct}%` } as React.CSSProperties}
       />
       <div className="player-chrome__row">
         <div className="player-chrome__readout">
-          <span className="player-chrome__title">{trackName}</span>
+          <span className="player-chrome__title">{isDisabled ? SIGNED_OUT_TITLE : trackName}</span>
         </div>
         <div className="player-chrome__transport">
           <span className="player-chrome__time">{formatTime(seekProgressMs)}</span>
@@ -91,16 +115,23 @@ export function PlayerChrome({
             <button
               className="player-chrome__icon-btn player-chrome__icon-btn--prev"
               onClick={onSkipPrevious}
+              disabled={isDisabled}
               aria-label="Previous track"
             >
               ⏮
             </button>
-            <button className="player-chrome__play-btn" onClick={onTogglePlay} aria-label={isPlaying ? 'Pause' : 'Play'}>
+            <button
+              className="player-chrome__play-btn"
+              onClick={onTogglePlay}
+              disabled={isDisabled}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+            >
               {isPlaying ? '⏸' : '▶'}
             </button>
             <button
               className="player-chrome__icon-btn player-chrome__icon-btn--next"
               onClick={onSkipNext}
+              disabled={isDisabled}
               aria-label="Next track"
             >
               ⏭
@@ -129,6 +160,7 @@ export function PlayerChrome({
                 onVolumeChange(next)
               }}
               aria-label="Volume"
+              disabled={isDisabled}
               className="player-chrome__volume"
               style={{ '--volume-fill': `${volume * 100}%` } as React.CSSProperties}
             />
@@ -145,7 +177,12 @@ export function PlayerChrome({
           <button className="player-chrome__icon-btn" onClick={toggleCinemaMode} aria-label="Hide player">
             ◐
           </button>
-          <button className="player-chrome__icon-btn" onClick={onOpenSettings} aria-label="Configuration">
+          <button
+            className="player-chrome__icon-btn"
+            onClick={onOpenSettings}
+            disabled={isDisabled}
+            aria-label="Configuration"
+          >
             ⚙
           </button>
         </div>

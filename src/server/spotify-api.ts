@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getSpotifySession, setSpotifySession, clearSpotifySession } from './session'
+import { getSpotifySession, setSpotifySession, clearSpotifySession, type SpotifySession } from './session'
 import { refreshAccessToken } from './spotify-auth'
 import { NOT_AUTHENTICATED_MESSAGE } from '../shared/authError'
 import { fetchDeezerDynamics } from './deezer-api'
@@ -38,6 +38,35 @@ async function getValidAccessToken(): Promise<string> {
 }
 
 export const getPlaybackToken = createServerFn({ method: 'GET' }).handler(async () => getValidAccessToken())
+
+export interface AuthStatus {
+  isSignedIn: boolean
+}
+
+/**
+ * True only when the session holds credentials this app can actually use: an
+ * access token, the refresh token needed to renew it, and the expiry that
+ * decides when to. Pure (no session/request access) so it stays unit-testable.
+ */
+export function hasUsableCredentials(data: Partial<SpotifySession>): boolean {
+  return Boolean(data.accessToken && data.refreshToken && data.expiresAt !== undefined)
+}
+
+/**
+ * Reports whether this browser has a Spotify session *without* throwing when
+ * it doesn't — the landing page is the player either way, and it decides what
+ * the sidebar shows. A missing/misconfigured env var still throws: that's a
+ * setup problem, and reporting it as "signed out" would just loop the user
+ * through a login that can never succeed.
+ */
+export const getAuthStatus = createServerFn({ method: 'GET' }).handler(async (): Promise<AuthStatus> => {
+  const session = await getSpotifySession()
+  return { isSignedIn: hasUsableCredentials(session.data) }
+})
+
+export const signOut = createServerFn({ method: 'POST' }).handler(async () => {
+  await clearSpotifySession()
+})
 
 export interface TrackDynamics {
   bpm: number

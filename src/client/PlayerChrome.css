@@ -12,6 +12,18 @@
   box-shadow: 0 8px 32px rgba(0, 60, 80, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   color: #0a2a35;
   font-family: system-ui, sans-serif;
+  transition: left 0.22s ease, width 0.22s ease;
+}
+
+/* With the sidebar open, center the bar in the space left over rather than
+   letting the panel cover its left third. Only worth doing where there is
+   room to spare: on a narrow screen the open sidebar is effectively the whole
+   UI, so the bar stays put. */
+@media (min-width: 900px) {
+  .player-chrome--shifted {
+    left: calc(50% + var(--sidebar-width) / 2);
+    width: min(640px, calc(92vw - var(--sidebar-width)));
+  }
 }
 
 /* Thin scrubber spanning the full bar width, sitting above the control
@@ -375,4 +387,51 @@
   height: 2.5rem;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 60, 80, 0.2);
+}
+
+/* Signed out, the bar is scenery: the controls that need an account read as
+   unavailable, while fullscreen and cinema mode stay fully live. */
+.player-chrome--disabled .player-chrome__title {
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+.player-chrome__icon-btn:disabled,
+.player-chrome__play-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.player-chrome__icon-btn:disabled:hover,
+.player-chrome__play-btn:disabled:hover {
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #2aceda, transparent 65%),
+    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+}
+
+.player-chrome__icon-btn--prev:disabled:hover,
+.player-chrome__icon-btn--next:disabled:hover {
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    rgba(10, 40, 60, 0.18);
+  color: #1a6ca1;
+}
+
+.player-chrome__seek:disabled,
+.player-chrome__volume:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* The thumb is the grab handle — with the slider inert there is nothing to
+   grab, so it stays hidden even on hover. */
+.player-chrome__seek:disabled::-webkit-slider-thumb,
+.player-chrome__seek:disabled:hover::-webkit-slider-thumb {
+  opacity: 0;
+}
+
+.player-chrome__seek:disabled::-moz-range-thumb,
+.player-chrome__seek:disabled:hover::-moz-range-thumb {
+  opacity: 0;
 }

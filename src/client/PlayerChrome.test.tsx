@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, fireEvent, cleanup } from '@testing-library/react'
-import { PlayerChrome } from './PlayerChrome'
+import { PlayerChrome, SIGNED_OUT_TITLE } from './PlayerChrome'
 
 // Vitest runs without globals, so RTL's automatic cleanup is not registered.
 afterEach(cleanup)
@@ -119,5 +119,85 @@ describe('PlayerChrome configuration', () => {
     fireEvent.click(getByLabelText('Configuration'))
 
     expect(onOpenSettings).toHaveBeenCalled()
+  })
+})
+
+describe('PlayerChrome when disabled', () => {
+  it('invites sign-in instead of naming a track', () => {
+    const { getByText, queryByText } = renderChrome({ isDisabled: true })
+
+    expect(getByText(SIGNED_OUT_TITLE)).not.toBeNull()
+    expect(queryByText('Aqua')).toBeNull()
+  })
+
+  it('reads 0:00 rather than a live position', () => {
+    const { getByText } = renderChrome({ isDisabled: true, progressMs: 90_000 })
+
+    expect(getByText('0:00')).not.toBeNull()
+  })
+
+  it('disables every control that needs an account', () => {
+    // Signed out there is nothing playing, so the play button reads "Play".
+    const { getByLabelText } = renderChrome({ isDisabled: true, isPlaying: false })
+
+    expect(getByLabelText('Seek')).toBeDisabled()
+    expect(getByLabelText('Volume')).toBeDisabled()
+    expect(getByLabelText('Previous track')).toBeDisabled()
+    expect(getByLabelText('Play')).toBeDisabled()
+    expect(getByLabelText('Next track')).toBeDisabled()
+    expect(getByLabelText('Configuration')).toBeDisabled()
+  })
+
+  it('keeps fullscreen and cinema mode usable', () => {
+    const { getByLabelText } = renderChrome({ isDisabled: true, isPlaying: false })
+
+    // Matched loosely: jsdom reports `document.fullscreenElement` as
+    // undefined, so `useFullscreen` starts out believing it is fullscreen and
+    // the label is "Exit fullscreen" here rather than "Enter fullscreen".
+    expect(getByLabelText(/fullscreen/i)).not.toBeDisabled()
+    expect(getByLabelText('Hide player')).not.toBeDisabled()
+  })
+
+  it('does not fire playback callbacks when a disabled control is clicked', () => {
+    const onTogglePlay = vi.fn()
+    const onSkipNext = vi.fn()
+    const onSkipPrevious = vi.fn()
+    const onOpenSettings = vi.fn()
+    const { getByLabelText } = renderChrome({
+      isDisabled: true,
+      isPlaying: false,
+      onTogglePlay,
+      onSkipNext,
+      onSkipPrevious,
+      onOpenSettings,
+    })
+
+    fireEvent.click(getByLabelText('Play'))
+    fireEvent.click(getByLabelText('Next track'))
+    fireEvent.click(getByLabelText('Previous track'))
+    fireEvent.click(getByLabelText('Configuration'))
+
+    expect(onTogglePlay).not.toHaveBeenCalled()
+    expect(onSkipNext).not.toHaveBeenCalled()
+    expect(onSkipPrevious).not.toHaveBeenCalled()
+    expect(onOpenSettings).not.toHaveBeenCalled()
+  })
+
+  it('ignores the space shortcut', () => {
+    const onTogglePlay = vi.fn()
+    renderChrome({ isDisabled: true, onTogglePlay })
+
+    fireEvent.keyDown(window, { code: 'Space' })
+
+    expect(onTogglePlay).not.toHaveBeenCalled()
+  })
+
+  it('still toggles play from the space shortcut when enabled', () => {
+    const onTogglePlay = vi.fn()
+    renderChrome({ onTogglePlay })
+
+    fireEvent.keyDown(window, { code: 'Space' })
+
+    expect(onTogglePlay).toHaveBeenCalledTimes(1)
   })
 })
