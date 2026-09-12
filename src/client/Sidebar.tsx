@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { PlaylistPicker } from './PlaylistPicker'
 import { useRevealOnMouseMove } from './useRevealOnMouseMove'
 import './Sidebar.css'
@@ -14,12 +13,6 @@ interface SidebarProps {
   onSignIn: () => void
   onSignOut: () => void
   onSelectTrack: (contextUri: string, trackUri: string) => void
-  /**
-   * Signed in, but something else is the active Spotify device — so there is
-   * playback elsewhere that could be moved here.
-   */
-  canPlayHere: boolean
-  onPlayHere: () => Promise<void>
 }
 
 /**
@@ -36,27 +29,7 @@ export function Sidebar({
   onSignIn,
   onSignOut,
   onSelectTrack,
-  canPlayHere,
-  onPlayHere,
 }: SidebarProps) {
-  const [playHereError, setPlayHereError] = useState<string | null>(null)
-
-  useEffect(() => {
-    // Playback landed here (or the account went quiet): the last failure is
-    // no longer about anything the user can see.
-    if (!canPlayHere) setPlayHereError(null)
-  }, [canPlayHere])
-
-  async function handlePlayHere() {
-    setPlayHereError(null)
-    try {
-      await onPlayHere()
-    } catch {
-      // Kept local and rendered as a message — a rejected transfer must never
-      // reach the render tree as a thrown error.
-      setPlayHereError("Couldn't move playback here. Check that Spotify is playing somewhere, then try again.")
-    }
-  }
   return (
     <aside
       className={`sidebar${isOpen ? '' : ' sidebar--closed'}`}
@@ -77,18 +50,6 @@ export function Sidebar({
 
       {isSignedIn ? (
         <>
-          {canPlayHere ? (
-            <div className="sidebar__transfer">
-              <button
-                type="button"
-                className="sidebar__button sidebar__button--quiet"
-                onClick={handlePlayHere}
-              >
-                Play here
-              </button>
-              {playHereError ? <p className="sidebar__error">{playHereError}</p> : null}
-            </div>
-          ) : null}
           <div className="sidebar__body">
             <PlaylistPicker onSelectTrack={onSelectTrack} variant="embedded" />
           </div>

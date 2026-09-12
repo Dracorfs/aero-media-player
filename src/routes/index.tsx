@@ -51,7 +51,6 @@ function Index() {
 
   const {
     state,
-    isActiveDevice,
     error,
     togglePlay,
     skipNext,
@@ -59,7 +58,6 @@ function Index() {
     seek,
     setVolume,
     playTrack,
-    playHere,
   } = usePlaybackSDK(() => getPlaybackToken(), { enabled: isSignedIn })
 
   const palette = useAlbumPalette(state?.albumArtUrl)
@@ -170,8 +168,6 @@ function Index() {
         onSignIn={startSignIn}
         onSignOut={handleSignOut}
         onSelectTrack={playTrack}
-        canPlayHere={isSignedIn && !isActiveDevice}
-        onPlayHere={playHere}
       />
       <SidebarReveal isSidebarOpen={isSidebarOpen} onOpen={openSidebar} />
       <ConfigurationModal
