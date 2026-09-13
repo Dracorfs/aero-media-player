@@ -104,6 +104,15 @@
     linear-gradient(#86a7bc 50%, #092747 0);
 }
 
+/* The account row: just the avatar button that opens the profile picture
+   picker. Sits between the titlebar and the playlist picker, signed-in only
+   — a profile picture is an account-scoped setting, same reasoning as the
+   background settings button staying disabled while signed out. */
+.sidebar__profile {
+  display: flex;
+  flex: 0 0 auto;
+}
+
 /* Owns the leftover height so the playlist list scrolls inside the panel
    instead of growing it. */
 .sidebar__body {

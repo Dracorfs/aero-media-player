@@ -4,7 +4,12 @@ import { assertServerEnv, requireEnv } from './env'
 
 export type BackgroundConfig = { type: 'color'; value: string } | { type: 'image'; value: string }
 
-export type SpotifySession = SpotifyTokens & { background?: BackgroundConfig }
+export type SpotifySession = SpotifyTokens & {
+  background?: BackgroundConfig
+  /** Filename of the selected profile picture, under `public/profile-images/`. Absent means
+   * the default icon. */
+  profileImage?: string
+}
 
 /**
  * Built lazily (not at module load) so the env check runs on the server at
@@ -35,6 +40,19 @@ export async function getStoredBackground(): Promise<BackgroundConfig | null> {
 
 export async function setStoredBackground(background: BackgroundConfig): Promise<void> {
   await updateSession(sessionConfig(), { background })
+}
+
+export async function getStoredProfileImage(): Promise<string | null> {
+  const session = await getSpotifySession()
+  return session.data.profileImage ?? null
+}
+
+export async function setStoredProfileImage(profileImage: string): Promise<void> {
+  await updateSession(sessionConfig(), { profileImage })
+}
+
+export async function clearStoredProfileImage(): Promise<void> {
+  await updateSession(sessionConfig(), { profileImage: undefined })
 }
 
 export async function clearSpotifySession(): Promise<void> {

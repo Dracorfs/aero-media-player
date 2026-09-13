@@ -487,3 +487,122 @@ app only works on the origin `SPOTIFY_REDIRECT_URI` names (`http://127.0.0.1:300
 it on `http://localhost:3000` used to half-work and then fail confusingly at sign-in: two
 cookie jars, and a popup that could not talk to its opener. The root route now redirects any
 other host to the canonical origin (Task 11), so this is enforced rather than documented.
+
+---
+
+# Feature: Profile Picture Selector
+
+## Overview
+
+A new popup, opened from the sidebar, lets a signed-in user pick a profile picture from
+previously uploaded images or upload a new one — the same mechanic as the existing
+background selector (`ConfigurationModal`), scoped to avatars instead of backdrops. When no
+picture has been chosen, a default "classic Windows user" placeholder icon is shown instead.
+Both the picker's image tiles and the avatar itself are framed with a Frutiger-Aero-style
+bordered frame, referencing the Windows Live Messenger 2009 "change display picture" dialog.
+
+## Reference assets
+
+The three URLs were unreachable by every fetch path this session has (Reddit's image CDN and
+`frutiger-aero.online`'s raw `.webp` both blocked or unviewable) — the user then attached all
+three directly to the chat, so the descriptions below are from actually seeing them, not
+convention-guessing:
+
+- **Default icon** (`d1d7e18a-image.png` in this session's uploads): a glossy 3D "bust"
+  silhouette — a sphere head + rounded shoulders, teal/cyan glass gradient, a darker teal
+  outline, a bright white specular highlight on the upper-left of the head, soft ambient
+  shadow beneath. This is the exact classic Windows Live Messenger "no display picture" icon
+  (teal variant). **Use this file as-is** — copy it into the project rather than redrawing an
+  approximation.
+- **Frame** (`f495fa69-image.png`): a single photo (irrelevant content — a globe/ocean scene)
+  displayed inside a glossy light-blue/white rounded-square frame: roughly a 15-18%-of-side
+  corner radius, a ~10-14px bevelled border with a bright white/pale-blue diagonal highlight
+  along the top-left and a darker blue-gray shadow along the bottom-right (giving it a domed
+  glass look), plus a soft ambient drop shadow outside the frame. This is a **decorative
+  border for a single prominent picture**, not a treatment applied to a whole grid of small
+  thumbnails — see the WLM dialog below, where it is only used for the one large "current
+  picture" preview.
+- **WLM "Select a picture" dialog** (`af23e32b-image.png`): a real screenshot, not a mockup.
+  Layout, left to right: a "Pictures" label over a 4-column, several-row **scrollable grid of
+  small plain square thumbnails** (generic cartoon icons — no individual frame, just tight
+  grid spacing) with a scrollbar; to the right, one large **framed preview** of the current
+  picture (the glossy frame described above) showing a flatter gray-blue generic-user
+  placeholder when unset; beneath the preview, a vertical stack of buttons — "Webcam
+  picture..", "Dynamic picture..", "Browse...", "Remove", "Modify.." (grayed); below the grid,
+  a "Featured pictures" row of a few curated small thumbnails; at the bottom, OK / Close
+  buttons. The header reads "Select a picture" (bold blue) / "Choose how you want to appear on
+  Windows Live." (gray). Window chrome is a light Windows 7 Aero-glass title bar.
+
+**What this app adopts vs. adapts**, now that the real dialog has been seen:
+
+- Adopt: the two-zone layout (a plain small-thumbnail gallery grid + one large framed
+  "current picture" preview next to it), and the specific button set collapses to just
+  **Browse... (upload)** and **Remove (reset to default)** — Webcam/Dynamic/Modify have no
+  equivalent in this app and stay out of scope.
+- Adapt: no OK/Close step. Every other picker in this app (`ConfigurationModal`) applies a
+  selection immediately on click, and the profile picture picker follows that existing
+  convention rather than introducing a new confirm/cancel pattern.
+- Defer: the "Featured pictures" curated row has no equivalent yet — this app has no
+  ready-made default avatar art beyond the one icon above. Stays an open question below
+  rather than something invented for v1.
+- The gallery grid tiles themselves are **plain thumbnails, not individually put through the
+  `ProfileAvatar` frame** — the frame is reserved for the one prominent preview (the modal's
+  current-picture panel, and the sidebar's avatar button), matching what the screenshot
+  actually shows.
+
+## Architecture Decisions
+
+- **Storage mirrors the background feature exactly.** The selected filename lives on the
+  session cookie (`SpotifySession.profileImage?: string`), not in a database — there is no
+  database in this app, and background config already proved this pattern works for
+  per-account settings. Files live in `public/profile-images/` (gitignored, same treatment as
+  `public/backgrounds/`), served at `/profile-images/<filename>`.
+- **No color tab.** The background modal toggles between Color and Image; a profile picture
+  is always an image, so the new modal drops the tab bar entirely and shows one gallery grid
+  plus the upload tile — closer to the WLM reference, which never offered flat colors.
+- **The default icon is reached via a "Remove" action, not a grid tile.** Corrected after
+  seeing the real dialog: WLM's grid holds only pickable pictures: "no picture" is set via the
+  **Remove** button beneath the preview, not a tile in among the thumbnails. This app mirrors
+  that — `clearProfileImage` is wired to a Remove control next to the preview, not to a first
+  grid cell (the background feature has no equivalent because a color is always a valid
+  fallback there; images need an explicit reset since there's no non-image default type).
+- **Duplicate the storage module rather than generalize it.** `saveBackgroundImageFile` /
+  `listBackgroundImageFiles` / `applyBackground` get a parallel `profileImageStorage.ts`
+  (`saveProfileImageFile` / `listProfileImageFiles` / `applyProfileImage`) instead of a shared
+  "image storage" abstraction. Lower risk for this slice — no changes to working, tested
+  background code — at the cost of some duplication; call out as a follow-up de-duplication
+  if it's ever wanted. `sanitizeImageFilename` is the one thing reused as-is (imported from
+  `shared/background.ts`, where it already lives filename-agnostic).
+- **Placement: a new row in the Sidebar**, between the titlebar and the playlist picker,
+  shown only when signed in (mirrors how the background settings button in `PlayerChrome`
+  stays disabled while signed out — profile pictures are equally an account-scoped setting).
+  Sign-off stays in the footer; the avatar is a separate concern (identity, not session
+  control).
+- **No webcam capture, no delete-from-gallery, no built-in starter gallery.** Out of scope for
+  this slice — matches "copy the background selector popup" literally (which has neither), and
+  keeps the task list from ballooning. Noted as open questions below in case v2 wants them.
+
+## Risks and Mitigations
+
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| A server-rendered avatar element repeats the exact shape of the earlier `useFullscreen` SSR bug (a client-only visual read during initial render) | Med | Task 21's manual verification explicitly curls a signed-out `GET /` and a signed-in render path looking for SSR errors, the same check that caught the earlier bug |
+| The default icon PNG lives in this session's uploads directory (cloud container), not on the user's machine yet | Low | Task 18 transfers it via the device bridge (`device_commit_files`) as part of the task, not a separate manual step |
+| Session cookie size creep from adding another field | Low | Only a filename is stored (same as `background`), not image bytes — negligible, already proven at this app's scale |
+| `public/profile-images/` ships user uploads into git by accident | Low | `.gitignore` entry is part of Task 6's acceptance criteria, not a separate easy-to-skip step |
+| Storage duplication (vs. a shared module with `backgroundStorage.ts`) drifts over time | Low | Conscious tradeoff, documented above; both modules are small and independently tested |
+
+## Open Questions
+
+- Should the profile picture surface anywhere besides the Sidebar (e.g. the player chrome
+  itself)? **Default assumption: Sidebar only** — it's the only place any account-identity UI
+  exists today.
+- Should v1 ship a small built-in starter gallery (a "Featured pictures" row, echoing the real
+  WLM dialog's own curated row) in addition to "whatever you've uploaded"? **Default
+  assumption: upload-only**, matching the background picker exactly — this app has no ready
+  default-avatar art to seed such a row with yet; a `public/profile-images/defaults/` folder
+  listed alongside uploads is a straightforward v2 addition once that art exists.
+- Should an uploaded image be deletable from the gallery? **Default assumption: no**, matching
+  the background picker (which also has no delete affordance) — flag if this matters to you.
+  (Note: WLM's "Remove" button is not this — it resets the *current selection* to the default
+  icon, which this plan already covers; it does not delete the file from the gallery.)

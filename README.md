@@ -101,8 +101,12 @@ but inert until there's a session.
 - Signed in, the sidebar lists your playlists: open one and click a track to
   start playback here. That is also what makes this tab the active Spotify
   device (it registers as **Aero Media Player**, so you can also pick it from
-  any Spotify client's device menu). If audio is already playing somewhere
-  else, **Play here** moves it over.
+  any Spotify client's device menu).
+- A profile picture button sits at the top of the sidebar, above your
+  playlists — click it to open a picker (styled after the Windows Live
+  Messenger "Select a picture" dialog): choose from images you've uploaded
+  before, upload a new one, or **Remove** to go back to the default icon.
+  Only shown once signed in, same as the background settings.
 - **Sign off**, at the bottom of the sidebar, clears the session and
   disconnects the device.
 - Close the sidebar with **×**. To bring it back, move the mouse: a **☰**

@@ -6,3 +6,4 @@ dist
 .env
 src/routeTree.gen.ts
 public/backgrounds/
+public/profile-images/

@@ -1,4 +1,5 @@
 import { PlaylistPicker } from './PlaylistPicker'
+import { ProfileAvatar } from './ProfileAvatar'
 import { useRevealOnMouseMove } from './useRevealOnMouseMove'
 import './Sidebar.css'
 
@@ -13,6 +14,9 @@ interface SidebarProps {
   onSignIn: () => void
   onSignOut: () => void
   onSelectTrack: (contextUri: string, trackUri: string) => void
+  /** `null` shows the default icon — see `ProfileAvatar`. Only relevant once signed in. */
+  profileImageFilename: string | null
+  onOpenProfilePicker: () => void
 }
 
 /**
@@ -29,6 +33,8 @@ export function Sidebar({
   onSignIn,
   onSignOut,
   onSelectTrack,
+  profileImageFilename,
+  onOpenProfilePicker,
 }: SidebarProps) {
   return (
     <aside
@@ -50,6 +56,9 @@ export function Sidebar({
 
       {isSignedIn ? (
         <>
+          <div className="sidebar__profile">
+            <ProfileAvatar filename={profileImageFilename} size="sm" onClick={onOpenProfilePicker} />
+          </div>
           <div className="sidebar__body">
             <PlaylistPicker onSelectTrack={onSelectTrack} variant="embedded" />
           </div>

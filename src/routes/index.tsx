@@ -15,8 +15,10 @@ import { useSidebar } from '../client/useSidebar'
 import { useSpotifyAuthPopup } from '../client/useSpotifyAuthPopup'
 import { gainToIntensity } from '../client/gainToIntensity'
 import { getBackgroundConfig, type BackgroundConfig } from '../server/background'
+import { getProfileImageConfig } from '../server/profileImage'
 import { VisualizerBackdrop } from '../client/VisualizerBackdrop'
 import { ConfigurationModal } from '../client/ConfigurationModal'
+import { ProfileImageModal } from '../client/ProfileImageModal'
 import { Visualizer } from '../client/Visualizer/Visualizer'
 import { PlayerChrome } from '../client/PlayerChrome'
 import { Sidebar, SidebarReveal } from '../client/Sidebar'
@@ -63,7 +65,9 @@ function Index() {
   const palette = useAlbumPalette(state?.albumArtUrl)
   const [dynamics, setDynamics] = useState<TrackDynamics>(DEFAULT_TRACK_DYNAMICS)
   const [backgroundConfig, setBackgroundConfig] = useState<BackgroundConfig | null>(null)
+  const [profileImageFilename, setProfileImageFilename] = useState<string | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isProfilePickerOpen, setIsProfilePickerOpen] = useState(false)
 
   // Re-reads the session from the server: the popup sets the cookie in its own
   // tab, so this side only finds out by asking again.
@@ -100,6 +104,18 @@ function Index() {
     getBackgroundConfig()
       .then((config) => {
         if (!cancelled) setBackgroundConfig(config)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    getProfileImageConfig()
+      .then((filename) => {
+        if (!cancelled) setProfileImageFilename(filename)
       })
       .catch(() => {})
     return () => {
@@ -168,6 +184,8 @@ function Index() {
         onSignIn={startSignIn}
         onSignOut={handleSignOut}
         onSelectTrack={playTrack}
+        profileImageFilename={profileImageFilename}
+        onOpenProfilePicker={() => setIsProfilePickerOpen(true)}
       />
       <SidebarReveal isSidebarOpen={isSidebarOpen} onOpen={openSidebar} />
       <ConfigurationModal
@@ -175,6 +193,12 @@ function Index() {
         onClose={() => setIsSettingsOpen(false)}
         backgroundConfig={backgroundConfig}
         onBackgroundConfigChange={setBackgroundConfig}
+      />
+      <ProfileImageModal
+        isOpen={isProfilePickerOpen}
+        onClose={() => setIsProfilePickerOpen(false)}
+        selectedFilename={profileImageFilename}
+        onSelectionChange={setProfileImageFilename}
       />
     </>
   )

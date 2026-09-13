@@ -28,6 +28,8 @@ function renderSidebar(overrides: Partial<Parameters<typeof Sidebar>[0]> = {}) {
     onSignIn: vi.fn(),
     onSignOut: vi.fn(),
     onSelectTrack: vi.fn(),
+    profileImageFilename: null,
+    onOpenProfilePicker: vi.fn(),
     ...overrides,
   }
   return { ...render(<Sidebar {...props} />), props }
@@ -189,5 +191,21 @@ describe('SidebarReveal', () => {
     })
 
     expect(screen.queryByRole('button', { name: /show library/i })).toBeNull()
+  })
+})
+
+describe('Sidebar profile picture button', () => {
+  it('is present and clickable when signed in', () => {
+    const { props } = renderSidebar({ isSignedIn: true })
+
+    fireEvent.click(screen.getByRole('button', { name: /change profile picture/i }))
+
+    expect(props.onOpenProfilePicker).toHaveBeenCalledTimes(1)
+  })
+
+  it('is absent when signed out', () => {
+    renderSidebar({ isSignedIn: false })
+
+    expect(screen.queryByRole('button', { name: /change profile picture/i })).toBeNull()
   })
 })

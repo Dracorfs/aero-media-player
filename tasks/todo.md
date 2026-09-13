@@ -233,3 +233,252 @@ of the app while the original tab waited forever.
 - [x] `npm test` (240 passing), `npm run typecheck`, `npm run build` all clean
 - [ ] Every box above checked
 - [ ] Open questions in `tasks/plan.md` answered or consciously deferred
+
+---
+
+## Phase 6: Profile picture selector
+
+Full design, rationale, risks and open questions for this feature:
+`tasks/plan.md` → "Feature: Profile Picture Selector". Read that section's "Reference assets"
+note before Task 18 — it describes all three attached reference images in detail and what
+this app adopts vs. adapts from the real WLM dialog.
+
+### [x] Task 15: Profile image session storage — XS
+`src/server/session.ts`
+
+- [x] `SpotifySession` gains `profileImage?: string` (a saved filename, mirroring `background`)
+- [x] `getStoredProfileImage(): Promise<string | null>` reads it, `null` when absent
+- [x] `setStoredProfileImage(filename: string): Promise<void>` and
+      `clearStoredProfileImage(): Promise<void>` (sets the field to `undefined`) update the
+      session
+- [x] Verify: `npm run typecheck` (no dedicated test file — the existing `background` fields on
+      this same type aren't unit-tested directly either; `profileImageStorage.test.ts` in
+      Task 16 covers this through a mocked `./session`, matching `backgroundStorage.test.ts`)
+
+**Dependencies:** None
+
+**Estimated scope:** XS (1 file)
+
+---
+
+### [x] Task 16: Profile image file storage — S
+`src/server/profileImageStorage.ts` (new), `src/server/profileImageStorage.test.ts` (new)
+
+**Description:** Direct copy of `backgroundStorage.ts`'s shape, retargeted at profile
+pictures: list uploaded files, save a new upload, and apply a selection (or clear it back to
+default).
+
+- [x] `listProfileImageFiles(): Promise<string[]>` reads `public/profile-images/`, filtered to
+      the same allowed extensions as backgrounds (jpg/png/webp/gif); returns `[]` if the
+      directory doesn't exist yet
+- [x] `saveProfileImageFile(file: File): Promise<string>` validates MIME type and the same
+      8 MB cap as backgrounds, writes under a `randomUUID()` filename, returns it
+- [x] `applyProfileImage(filename: string): Promise<string>` sanitizes the filename (reusing
+      `sanitizeImageFilename` from `../shared/background`), confirms it's in the directory
+      listing, then calls `setStoredProfileImage`
+- [x] `clearProfileImage(): Promise<void>` calls `clearStoredProfileImage`
+- [x] `public/profile-images/` added to `.gitignore` (same line style as `public/backgrounds/`)
+- [x] Tests (mocking `node:fs/promises` and `./session`, same technique as
+      `backgroundStorage.test.ts`): listing filters extensions and tolerates a missing
+      directory; save validates type/size and returns a generated filename; apply rejects an
+      unknown filename and rejects a path-traversal attempt via `sanitizeImageFilename`; clear
+      calls through to the session helper
+- [x] Verify: `npx vitest run src/server/profileImageStorage.test.ts`, `npm run typecheck`
+
+**Dependencies:** Task 15
+
+**Estimated scope:** S (2 files)
+
+---
+
+### [x] Task 17: Profile image server functions — S
+`src/server/profileImage.ts` (new)
+
+**Description:** The `createServerFn` wrappers, mirroring `background.ts` 1:1.
+
+- [x] `getProfileImageConfig()` — `GET`, returns `string | null` directly (tighter mirror of
+      `getBackgroundConfig()`, which returns `getStoredBackground()`'s value as-is rather than
+      wrapping it — deviates from this task's original `{ filename }` wording)
+- [x] `setProfileImage` — `POST`, validates a non-empty string, requires an authenticated
+      session (reuse the same `requireAuthenticatedSession` guard style as `background.ts`),
+      calls `applyProfileImage`
+- [x] `listProfileImages()` — `GET`, returns `listProfileImageFiles()`
+- [x] `uploadProfileImage` — `POST`, validates the `FormData` has an `image` File, requires an
+      authenticated session, calls `saveProfileImageFile`, returns `{ filename }`
+- [x] `clearProfileImage` — `POST`, requires an authenticated session, calls the storage
+      module's `clearProfileImage`
+- [x] No dedicated test file, deviating from this task's original plan — `background.ts` (the
+      file this mirrors) has no test file either in this codebase; its `createServerFn`
+      wrapper layer (validator + auth guard + delegate) is thin enough that the storage-layer
+      tests (Task 16) and Task 21's manual verification cover it, matching existing convention
+- [x] Verify: `npm run typecheck`
+
+**Dependencies:** Task 16
+
+**Estimated scope:** S (1 file)
+
+---
+
+### [x] Checkpoint E: Foundation
+- [x] `npm test` and `npm run typecheck` pass
+- [x] `npm run build` still succeeds
+- [x] No client code touched yet — this checkpoint is server-only
+
+---
+
+### [x] Task 18: Default icon asset and Aero frame CSS — S
+`public/default-avatar.png` (new), `src/client/ProfileAvatar.css` (new)
+
+**Description:** Read "Reference assets" in `tasks/plan.md` first — the three images are
+attached and described there in detail, not approximated.
+
+- [x] The default icon file (this session's upload `d1d7e18a-image.png` — the teal glossy
+      bust silhouette) is transferred into the project as `public/default-avatar.png` via the
+      device bridge (`device_stage_files`/`device_commit_files`, or `SendUserFile` +
+      `device_commit_files` if working from the cloud container) and served at
+      `/default-avatar.png`. It lives directly under `public/`, not in the gitignored
+      `public/profile-images/` upload namespace — it's a shipped app asset, not a user upload
+- [x] A reusable "Aero frame" CSS class in `ProfileAvatar.css`, matching the plan's
+      description of the frame reference image: rounded-square corners (~15-18% of side),
+      a bevelled border with a bright white/pale-blue highlight along the top-left and a
+      darker blue-gray shadow along the bottom-right, plus a soft outer ambient shadow. This
+      is the one class both the sidebar avatar button and the modal's current-picture preview
+      use — **not** applied to the picker's small gallery grid tiles (see Task 20)
+
+**Dependencies:** None (can run in parallel with Tasks 15-17)
+
+**Estimated scope:** S (2 files)
+
+---
+
+### [x] Task 19: `ProfileAvatar` component — S
+`src/client/ProfileAvatar.tsx` (new), `src/client/ProfileAvatar.test.tsx` (new)
+
+**Description:** The framed avatar display, used both standalone (the sidebar's clickable
+avatar) and inside the picker (each gallery tile, plus the picker's own "currently selected"
+preview) — one component, one visual source of truth for the frame.
+
+- [x] Props: `filename: string | null`, optional `size` (e.g. `'sm' | 'lg'` for the sidebar
+      button vs. a picker tile), optional `onClick`
+- [x] Renders `<img src={`/profile-images/${filename}`}>` framed in the Aero treatment from
+      Task 18 when `filename` is set
+- [x] Renders the default icon, same frame, when `filename` is `null`
+- [x] Renders as a `<button>` (not a bare `<img>`/`<div>`) when `onClick` is provided, so it's
+      keyboard- and screen-reader-accessible as an interactive control
+- [x] Tests: shows the `<img>` with the right `src` when given a filename; shows the default
+      icon markup when `null`; renders a button and fires `onClick` when clicked; renders as a
+      non-interactive element when `onClick` is omitted
+- [x] Verify: `npx vitest run src/client/ProfileAvatar.test.tsx`, `npm run typecheck`
+
+**Dependencies:** Task 18
+
+**Estimated scope:** S (2 files)
+
+---
+
+### [x] Task 20: `ProfileImageModal` component — M
+`src/client/ProfileImageModal.tsx` (new), `src/client/ProfileImageModal.css` (new),
+`src/client/ProfileImageModal.test.tsx` (new)
+
+**Description:** Direct adaptation of `ConfigurationModal`'s chrome (backdrop, Aero titlebar,
+close button), laid out like the real WLM "Select a picture" dialog now on file in
+`tasks/plan.md`: a plain small-thumbnail gallery on one side, one large framed "current
+picture" preview with a Remove button on the other. No OK/Close step — matches this app's
+existing immediate-apply convention instead of WLM's.
+
+- [x] Same modal chrome as `ConfigurationModal`: backdrop click-to-close, Aero-glass titlebar,
+      close button in the controls tray (reuse/mirror the CSS, not the background modal's
+      color-tab markup — this modal has no tabs)
+- [x] Props: `isOpen`, `onClose`, `selectedFilename: string | null`,
+      `onSelectionChange: (filename: string | null) => void`
+- [x] On open, loads the gallery via `listProfileImages()` (mirrors
+      `ConfigurationModal`'s `listBackgroundImages()` effect, including the "load once per
+      open" guard and its error message)
+- [x] Gallery grid: one **plain, lightly-bordered** square thumbnail per uploaded filename
+      (deliberately not the full `ProfileAvatar` frame — matches the real dialog's plain small
+      thumbnails), marked selected when it matches `selectedFilename`, plus an upload tile
+      identical in spirit to `.configuration-modal__upload` ("Browse..." — a file `<input>`
+      triggering `uploadProfileImage` then immediately selecting the new upload)
+- [x] Preview panel: a large `ProfileAvatar` (the full Aero frame) showing `selectedFilename`
+      or the default icon, with a "Remove" button beneath it
+- [x] Clicking a gallery tile calls `setProfileImage({ data: { filename } })` then
+      `onSelectionChange(filename)`; clicking "Remove" calls `clearProfileImage()` then
+      `onSelectionChange(null)`; a failed call shows the same inline error text pattern as
+      `ConfigurationModal`
+- [x] Tests (mirroring `ConfigurationModal.test.tsx`'s structure, with the server fns mocked):
+      loads and renders the gallery on open; the preview reflects `selectedFilename`; selecting
+      a gallery tile calls `onSelectionChange`; clicking Remove clears it; upload flow calls
+      `uploadProfileImage` then selects the result; a rejected select/upload/remove surfaces
+      the error text instead of throwing; closed renders nothing
+- [x] Verify: `npx vitest run src/client/ProfileImageModal.test.tsx`, `npm run typecheck`
+
+**Dependencies:** Tasks 17, 19
+
+**Estimated scope:** M (3 files)
+
+---
+
+### [x] Checkpoint F: Components
+- [x] `npm test` and `npm run typecheck` pass
+- [x] `npm run build` succeeds
+- [x] `ProfileAvatar` and `ProfileImageModal` are fully covered by tests in isolation, with no
+      wiring into `index.tsx` or `Sidebar.tsx` yet — nothing user-visible has changed
+
+---
+
+### [x] Task 21: Wire the picker into the app — M
+`src/routes/index.tsx`, `src/client/Sidebar.tsx`, `src/client/Sidebar.css`,
+`src/client/Sidebar.test.tsx`
+
+**Description:** The integration slice — after this task a signed-in user can actually open
+the picker from the sidebar and see their choice reflected.
+
+- [x] `index.tsx` loads `getProfileImageConfig()` on mount (same `useEffect` shape as
+      `backgroundConfig`) into a `profileImageFilename` state, and holds an
+      `isProfileModalOpen` state (same shape as `isSettingsOpen`)
+- [x] A new row in `Sidebar` — visible only when `isSignedIn`, positioned between the
+      titlebar and the playlist picker — renders a `ProfileAvatar` (with `onClick`) sized for
+      the sidebar; clicking it calls a new `onOpenProfilePicker` prop
+- [x] `<ProfileImageModal>` is rendered from `index.tsx` alongside `<ConfigurationModal>`,
+      wired to the same `profileImageFilename` state via `onSelectionChange`
+- [x] Signed-out sidebar shows no avatar row at all (matches the existing convention that
+      account-scoped settings are unavailable before sign-in, e.g. the disabled background
+      button in `PlayerChrome`)
+- [x] `Sidebar.test.tsx` additions: the avatar row is present and clickable when signed in;
+      absent when signed out; clicking it invokes the new callback
+- [x] Manual verification: ran `npm run dev` and `curl`ed a signed-out `GET /` — no SSR
+      errors in the server log, "Sign in with Spotify" present, and (correctly) no
+      `sidebar__profile` / "Change profile picture" markup while signed out. The signed-in
+      render (avatar visible with the default icon, or a picked image) still needs a manual
+      check by the user after a real sign-in — this session has no live Spotify session to
+      exercise that path with
+- [x] Verify: `npm test` (260 passing), `npm run typecheck`, `npm run build` all clean, plus
+      the manual curl check above
+
+**Dependencies:** Tasks 20 (modal), 17 (server fns already required by the modal)
+
+**Estimated scope:** M (4 files)
+
+---
+
+### [x] Task 22: README update — XS
+`README.md`
+
+- [x] A short section (or addition to an existing feature list) describing the profile
+      picture picker: where it lives (sidebar, signed-in only), that it mirrors the background
+      picker's gallery-plus-upload mechanic, and the current default-icon/frame caveat if
+      Task 18 shipped without the real reference assets
+
+**Dependencies:** Task 21
+
+**Estimated scope:** XS (1 file)
+
+---
+
+### [x] Checkpoint G: Complete
+- [x] `npm test`, `npm run typecheck`, `npm run build` all clean
+- [x] Every box above checked
+- [x] Open questions in `tasks/plan.md` (Feature: Profile Picture Selector section) answered
+      or consciously deferred
+- [x] If the reference images were attached mid-build, Task 18's approximations have been
+      revisited against them
