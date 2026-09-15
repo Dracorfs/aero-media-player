@@ -56,15 +56,13 @@ export function Sidebar({
 
       {isSignedIn ? (
         <>
-          <div className="sidebar__profile">
-            <ProfileAvatar filename={profileImageFilename} size="sm" onClick={onOpenProfilePicker} />
-          </div>
           <div className="sidebar__body">
             <PlaylistPicker onSelectTrack={onSelectTrack} variant="embedded" />
           </div>
           <footer className="sidebar__footer">
-            <button type="button" className="sidebar__button sidebar__button--quiet" onClick={onSignOut}>
-              Sign off
+            <ProfileAvatar filename={profileImageFilename} size="sm" onClick={onOpenProfilePicker} />
+            <button type="button" className="sidebar__signoff" onClick={onSignOut} aria-label="Sign off">
+              ⚿
             </button>
           </footer>
         </>
