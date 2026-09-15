@@ -113,7 +113,12 @@ export function PlayerChrome({
       />
       <div className="player-chrome__row">
         <div className="player-chrome__readout">
-          <span className="player-chrome__title">{isDisabled ? SIGNED_OUT_TITLE : trackName}</span>
+          <div className="player-chrome__now-playing">
+            {!isDisabled && trackName ? (
+              <img className="player-chrome__song-icon" src="/song-icon.png" alt="" aria-hidden="true" />
+            ) : null}
+            <span className="player-chrome__title">{isDisabled ? SIGNED_OUT_TITLE : trackName}</span>
+          </div>
         </div>
         <div className="player-chrome__transport">
           <span className="player-chrome__time">{formatTime(seekProgressMs)}</span>

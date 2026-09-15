@@ -49,7 +49,10 @@ export function PlaylistPicker({ onSelectTrack, variant = 'standalone' }: Playli
           <button className="playlist-picker__back" onClick={() => setSelected(null)} aria-label="Back">
             ‹
           </button>
-          <h2 className="playlist-picker__title">{selected.name}</h2>
+          <h2 className="playlist-picker__title">
+            <img className="playlist-picker__title-icon" src="/playlist-icon.png" alt="" aria-hidden="true" />
+            {selected.name}
+          </h2>
         </div>
         {tracks === null ? (
           <p className="playlist-picker__status">Loading tracks...</p>
@@ -61,7 +64,10 @@ export function PlaylistPicker({ onSelectTrack, variant = 'standalone' }: Playli
                   className="playlist-picker__item"
                   onClick={() => onSelectTrack(selected.uri, track.uri)}
                 >
-                  {track.name} <span className="playlist-picker__track-artists">— {track.artists}</span>
+                  <img className="playlist-picker__item-icon" src="/song-icon.png" alt="" aria-hidden="true" />
+                  <span className="playlist-picker__item-label">
+                    {track.name} <span className="playlist-picker__track-artists">— {track.artists}</span>
+                  </span>
                 </button>
               </li>
             ))}
@@ -85,7 +91,8 @@ export function PlaylistPicker({ onSelectTrack, variant = 'standalone' }: Playli
         {playlists.map((playlist) => (
           <li key={playlist.id}>
             <button className="playlist-picker__item" onClick={() => setSelected(playlist)}>
-              {playlist.name}
+              <img className="playlist-picker__item-icon" src="/playlist-icon.png" alt="" aria-hidden="true" />
+              <span className="playlist-picker__item-label">{playlist.name}</span>
             </button>
           </li>
         ))}
