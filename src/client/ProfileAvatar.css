@@ -36,7 +36,7 @@
 }
 
 button.profile-avatar {
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 button.profile-avatar:hover {

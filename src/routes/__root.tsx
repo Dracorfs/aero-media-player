@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, redirect, HeadContent, Scripts } from '@tanstack/react-router'
 import { getCanonicalRedirect } from '../server/origin'
+import '../client/cursor.css'
 
 export const Route = createRootRoute({
   beforeLoad: async () => {

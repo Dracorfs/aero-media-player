@@ -39,7 +39,7 @@
   height: 0.9rem;
   margin: 0 0 0.5rem;
   background: transparent;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .player-chrome__seek::-webkit-slider-runnable-track {
@@ -229,7 +229,7 @@
   color: #ffffff;
   text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 1.2rem;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .player-chrome__icon-btn:hover {
@@ -293,7 +293,7 @@
   color: #ffffff;
   text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 1.1rem;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
   position: relative;
   z-index: 1;
   margin: 0 -7px;
@@ -316,7 +316,7 @@
   width: 4.5rem;
   height: 0.9rem;
   background: transparent;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 /* The filled portion (0 to the current value) stays the vivid blue-to-
@@ -398,7 +398,7 @@
   border-radius: 50%;
   width: 2.5rem;
   height: 2.5rem;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
   box-shadow: 0 2px 6px rgba(0, 60, 80, 0.2);
 }
 

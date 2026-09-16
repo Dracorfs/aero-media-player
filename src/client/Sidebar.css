@@ -94,7 +94,7 @@
   text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 0.85rem;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .sidebar__close:hover {
@@ -163,7 +163,7 @@
   font: inherit;
   font-weight: 600;
   font-size: 0.9rem;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .sidebar__button:hover {
@@ -203,7 +203,7 @@
   color: #1a6ca1;
   font-size: 1.15rem;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .sidebar__signoff:hover {
@@ -235,5 +235,5 @@
   color: #0d3d57;
   font-size: 1rem;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }

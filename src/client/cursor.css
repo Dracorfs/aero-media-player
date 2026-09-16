@@ -1,0 +1,12 @@
+/* App-wide cursor theme: the "Frutiger Aero Water Arrow with Clownfish"
+   pack (SweezyCursors) — a static water-drop arrow as the default cursor,
+   replaced per-element by the matching clownfish hand cursor wherever this
+   app already sets `cursor: pointer` on a clickable control. Both assets
+   are baked down to a single 16x16 frame (public/cursors/) rather than
+   shipped as the pack's original multi-resolution .cur files: browsers
+   are inconsistent about which embedded size they pick from a multi-size
+   .cur, and were observed rendering the hover cursor oversized when the
+   file carried all five sizes. */
+body {
+  cursor: url('/cursors/water-arrow.cur') 0 0, auto;
+}

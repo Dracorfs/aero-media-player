@@ -57,7 +57,7 @@
   text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
   font-size: 0.85rem;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .profile-image-modal__close:hover {
@@ -119,7 +119,7 @@
   border-radius: 0.4rem;
   border: 1px solid rgba(255, 255, 255, 0.8);
   overflow: hidden;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
   box-shadow: 0 1px 4px rgba(0, 60, 80, 0.2);
 }
 
@@ -145,7 +145,7 @@
   border: 2px dashed rgba(10, 42, 53, 0.4);
   font-size: 0.62rem;
   text-align: center;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
   padding: 0.2rem;
 }
 
@@ -175,7 +175,7 @@
   font: inherit;
   font-weight: 500;
   font-size: 0.85rem;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .profile-image-modal__remove:hover:not(:disabled) {

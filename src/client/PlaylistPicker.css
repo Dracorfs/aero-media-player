@@ -31,7 +31,7 @@
   color: #0a2a35;
   font-size: 1rem;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
 }
 
 .playlist-picker__title {
@@ -73,7 +73,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   color: #0a2a35;
   font: inherit;
-  cursor: pointer;
+  cursor: url('/cursors/clownfish-hand.cur') 7 0, pointer;
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
