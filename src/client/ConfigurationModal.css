@@ -47,16 +47,19 @@
   box-shadow: 0 1px 0 #fffa, 1px 0 0 #fffa, -1px 0 0 #fffa;
 }
 
+/* Base state is just the glass sheen over whatever sits behind it (the
+   titlebar's blue) -- no color glow yet. Per the reference Aero
+   window-control button (frutiger-aero.org), a cyan radial "gloss" only
+   appears on :hover, and a darker teal-to-navy gradient marks :active --
+   this button previously had those two swapped (the click effect showing
+   on hover, with no distinct hover effect of its own). */
 .configuration-modal__close {
   width: 48px;
   height: 19px;
   padding: 0;
   border: 0;
   border-radius: 0 0 4px 4px;
-  background:
-    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
-    radial-gradient(circle at bottom, #2aceda, transparent 65%),
-    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+  background: linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80);
   box-shadow: inset 0 0 0 1px #fffa;
   color: #ffffff;
   text-shadow: 0 1px 1px rgba(0, 30, 60, 0.6);
@@ -66,6 +69,13 @@
 }
 
 .configuration-modal__close:hover {
+  background:
+    linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
+    radial-gradient(circle at bottom, #2aceda, transparent 65%),
+    linear-gradient(#b6d9ee 50%, #1a6ca1 0);
+}
+
+.configuration-modal__close:active {
   background:
     linear-gradient(#ffffff80, #ffffff4d 45%, #0000001a 50%, #0000001a 75%, #ffffff80),
     radial-gradient(circle at bottom, #0bfdfa, transparent 65%),
